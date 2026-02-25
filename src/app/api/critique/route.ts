@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { complete } from "@/core/llm/provider";
 import { injectMemoryContext } from "@/db/memory";
+import { checkLlmRateLimit, validateInputSize, MAX_SIZES } from "@/lib/security";
 
 const BASE_CRITIQUE_PROMPT = `You are an expert code reviewer. Analyze the provided code and return a JSON object with this exact structure:
 {
@@ -28,6 +29,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Rate limit LLM calls
+    const rateLimited = await checkLlmRateLimit(user.id);
+    if (rateLimited) return rateLimited;
+
     const { code } = await request.json();
 
     if (!code || typeof code !== "string" || code.trim().length < 10) {
@@ -35,6 +40,12 @@ export async function POST(request: NextRequest) {
         { error: "Code is required (min 10 characters)" },
         { status: 400 }
       );
+    }
+
+    // Validate input size
+    const sizeErr = validateInputSize(code, MAX_SIZES.code, "Code");
+    if (sizeErr) {
+      return NextResponse.json({ error: sizeErr }, { status: 400 });
     }
 
     // Auto-inject relevant memory context (e.g. project conventions, past reviews)

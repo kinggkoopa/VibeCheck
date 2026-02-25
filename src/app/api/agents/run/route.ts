@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { runSwarm } from "@/core/agents/graph";
+import { checkLlmRateLimit, validateInputSize, MAX_SIZES } from "@/lib/security";
 import type { LLMProvider } from "@/types";
 
 const VALID_PROVIDERS = new Set(["anthropic", "openrouter", "groq", "openai", "ollama"]);
@@ -13,6 +14,9 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const rateLimited = await checkLlmRateLimit(user.id);
+    if (rateLimited) return rateLimited;
 
     const { task, provider, max_iterations } = await request.json();
 
@@ -28,6 +32,11 @@ export async function POST(request: NextRequest) {
         { error: `Invalid provider. Must be one of: ${[...VALID_PROVIDERS].join(", ")}` },
         { status: 400 }
       );
+    }
+
+    const sizeErr = validateInputSize(task, MAX_SIZES.task, "Task");
+    if (sizeErr) {
+      return NextResponse.json({ error: sizeErr }, { status: 400 });
     }
 
     const iterations = Math.min(Math.max(max_iterations ?? 3, 1), 10);

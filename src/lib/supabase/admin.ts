@@ -1,9 +1,23 @@
+import "server-only";
 import { createClient } from "@supabase/supabase-js";
 
 /**
  * Service-role Supabase client — bypasses RLS.
- * Use ONLY for operations that require elevated access (e.g., admin analytics).
- * NEVER expose this client or its key to the browser.
+ *
+ * SECURITY CONSTRAINTS:
+ * - NEVER import this from client components or browser-side code.
+ * - Use ONLY for operations that absolutely require elevated access.
+ * - The `import "server-only"` directive above enforces this at build time.
+ * - Never pass this client to user-facing functions.
+ * - Audit all callers when modifying this file.
+ *
+ * Approved use cases:
+ * - Admin-level analytics aggregation
+ * - Background job processing
+ * - System migrations
+ *
+ * For user-scoped operations, ALWAYS use the regular `createClient()` from
+ * `@/lib/supabase/server` which respects RLS policies.
  */
 export function createAdminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;

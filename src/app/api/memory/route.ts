@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { storeMemory, searchMemories, listRecentMemories } from "@/core/memory/vector";
+import { checkApiRateLimit, validateInputSize, MAX_SIZES } from "@/lib/security";
 
 /** GET /api/memory — list recent memories */
 export async function GET() {
@@ -28,6 +29,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const rateLimited = await checkApiRateLimit(user.id);
+    if (rateLimited) return rateLimited;
+
     const body = await request.json();
     const { action } = body;
 
@@ -38,8 +42,20 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "content is required" }, { status: 400 });
       }
 
+      const sizeErr = validateInputSize(content, MAX_SIZES.memory, "Memory content");
+      if (sizeErr) {
+        return NextResponse.json({ error: sizeErr }, { status: 400 });
+      }
+
       if (!embedding || !Array.isArray(embedding)) {
         return NextResponse.json({ error: "embedding array is required" }, { status: 400 });
+      }
+
+      if (embedding.length > MAX_SIZES.embedding) {
+        return NextResponse.json(
+          { error: `Embedding exceeds max dimensions (${MAX_SIZES.embedding})` },
+          { status: 400 }
+        );
       }
 
       const id = await storeMemory(content, embedding, metadata ?? {});

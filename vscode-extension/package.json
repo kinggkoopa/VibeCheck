@@ -1,0 +1,70 @@
+{
+  "name": "meta-vibe-coder",
+  "displayName": "MetaVibeCoder",
+  "description": "Run multi-agent code critique, prompt optimization, and auto-iteration from VS Code.",
+  "version": "0.1.0",
+  "publisher": "metavibecoder",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Other", "Linters"],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "metaVibe.runSwarm",
+        "title": "Meta Vibe: Run Swarm on Selection"
+      },
+      {
+        "command": "metaVibe.optimizePrompt",
+        "title": "Meta Vibe: Optimize Prompt"
+      },
+      {
+        "command": "metaVibe.critiqueFile",
+        "title": "Meta Vibe: Critique Current File"
+      },
+      {
+        "command": "metaVibe.autoIterate",
+        "title": "Meta Vibe: Auto-Iterate on Selection"
+      }
+    ],
+    "configuration": {
+      "title": "MetaVibeCoder",
+      "properties": {
+        "metaVibe.serverUrl": {
+          "type": "string",
+          "default": "http://localhost:3000",
+          "description": "URL of your MetaVibeCoder web app"
+        },
+        "metaVibe.anthropicApiKey": {
+          "type": "string",
+          "default": "",
+          "description": "Anthropic API key for direct API calls (bypasses web app)"
+        },
+        "metaVibe.defaultModel": {
+          "type": "string",
+          "default": "claude-opus-4-20250918",
+          "description": "Default model for direct API calls"
+        }
+      }
+    },
+    "keybindings": [
+      {
+        "command": "metaVibe.critiqueFile",
+        "key": "ctrl+shift+v",
+        "mac": "cmd+shift+v",
+        "when": "editorTextFocus"
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.7.0"
+  }
+}

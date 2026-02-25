@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { autoIterate } from "@/features/iterate/actions";
+import { checkLlmRateLimit, validateInputSize, MAX_SIZES } from "@/lib/security";
 
 /**
  * POST /api/iterate — Auto-iterate on code.
@@ -22,6 +23,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const rateLimited = await checkLlmRateLimit(user.id);
+    if (rateLimited) return rateLimited;
+
     const body = await request.json();
     const { code, max_iterations } = body;
 
@@ -30,6 +34,11 @@ export async function POST(request: NextRequest) {
         { error: "Code is required (min 10 characters)" },
         { status: 400 }
       );
+    }
+
+    const sizeErr = validateInputSize(code, MAX_SIZES.code, "Code");
+    if (sizeErr) {
+      return NextResponse.json({ error: sizeErr }, { status: 400 });
     }
 
     const result = await autoIterate(code, max_iterations ?? 3);

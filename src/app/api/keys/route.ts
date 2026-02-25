@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { storeUserKey, listUserKeys, deleteUserKey } from "@/lib/crypto/keys";
 import { createClient } from "@/lib/supabase/server";
+import { checkApiRateLimit } from "@/lib/security";
 import type { LLMProvider } from "@/types";
 
 const VALID_PROVIDERS = new Set(["anthropic", "openrouter", "groq", "openai", "ollama"]);
@@ -30,6 +31,9 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const rateLimited = await checkApiRateLimit(user.id);
+    if (rateLimited) return rateLimited;
 
     const body = await request.json();
     const { provider, api_key, display_label, model_default } = body;
