@@ -107,7 +107,7 @@ export function RemoteControl() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [session?.session_id, session]);
+  }, [session?.session_id]);
 
   // ── Create session ──
   async function handleCreateSession() {
@@ -253,13 +253,30 @@ export function RemoteControl() {
                     onClick={(e) => (e.target as HTMLInputElement).select()}
                   />
                   <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(session.session_url);
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(session.session_url);
+                      } catch {
+                        // Fallback: select the input so user can copy manually
+                      }
                     }}
                     className="rounded-lg bg-surface-elevated px-3 py-1.5 text-xs font-medium transition-colors hover:bg-surface"
                   >
                     Copy
                   </button>
+                  {typeof navigator !== "undefined" && "share" in navigator && (
+                    <button
+                      onClick={() =>
+                        navigator.share({
+                          title: "Remote Session",
+                          url: session.session_url,
+                        }).catch(() => {})
+                      }
+                      className="rounded-lg bg-surface-elevated px-3 py-1.5 text-xs font-medium transition-colors hover:bg-surface"
+                    >
+                      Share
+                    </button>
+                  )}
                 </div>
                 <p className="text-xs text-muted">
                   Expires: {new Date(session.expires_at).toLocaleTimeString()}
@@ -353,99 +370,18 @@ export function RemoteControl() {
   );
 }
 
-// ── QR Code Generator (SVG-based, no external dependency) ──
+// ── QR Code (via external API for real, scannable codes) ──
 
 function QRCode({ value, size = 160 }: { value: string; size?: number }) {
-  // Simple QR code using a deterministic pattern from the value
-  // For production, install `qrcode` package for real QR encoding.
-  // This renders a visual placeholder with the URL encoded.
-  const modules = generateQRModules(value);
-  const moduleCount = modules.length;
-  const cellSize = size / moduleCount;
-
+  const encodedValue = encodeURIComponent(value);
   return (
-    <svg
+    <img
+      src={`https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodedValue}&margin=8`}
+      alt={`QR code for ${value}`}
       width={size}
       height={size}
-      viewBox={`0 0 ${size} ${size}`}
-      className="rounded-lg bg-white p-2"
-      role="img"
-      aria-label={`QR code for ${value}`}
-    >
-      {modules.map((row, y) =>
-        row.map((cell, x) =>
-          cell ? (
-            <rect
-              key={`${x}-${y}`}
-              x={x * cellSize}
-              y={y * cellSize}
-              width={cellSize}
-              height={cellSize}
-              fill="black"
-            />
-          ) : null
-        )
-      )}
-    </svg>
+      className="rounded-lg"
+      loading="eager"
+    />
   );
-}
-
-/**
- * Generate a deterministic QR-like matrix from a string.
- *
- * NOTE: This is a simplified visual pattern generator, not ISO 18004.
- * For scannable QR codes, install `qrcode` package:
- *   npm install qrcode @types/qrcode
- *   Then use: QRCode.toDataURL(value)
- *
- * The pattern uses a hash of the input to create a visually interesting
- * but deterministic grid with the standard QR finder patterns.
- */
-function generateQRModules(value: string): boolean[][] {
-  const size = 25; // 25x25 module QR code (Version 2)
-  const modules: boolean[][] = Array.from({ length: size }, () =>
-    new Array(size).fill(false)
-  );
-
-  // Add finder patterns (top-left, top-right, bottom-left)
-  const addFinderPattern = (startX: number, startY: number) => {
-    for (let y = 0; y < 7; y++) {
-      for (let x = 0; x < 7; x++) {
-        const isOuter = y === 0 || y === 6 || x === 0 || x === 6;
-        const isInner = y >= 2 && y <= 4 && x >= 2 && x <= 4;
-        modules[startY + y][startX + x] = isOuter || isInner;
-      }
-    }
-  };
-
-  addFinderPattern(0, 0);
-  addFinderPattern(size - 7, 0);
-  addFinderPattern(0, size - 7);
-
-  // Timing patterns
-  for (let i = 8; i < size - 8; i++) {
-    modules[6][i] = i % 2 === 0;
-    modules[i][6] = i % 2 === 0;
-  }
-
-  // Data area — fill with hash-derived pattern
-  let hash = 0;
-  for (let i = 0; i < value.length; i++) {
-    hash = ((hash << 5) - hash + value.charCodeAt(i)) | 0;
-  }
-
-  for (let y = 9; y < size - 1; y++) {
-    for (let x = 9; x < size - 1; x++) {
-      // Skip finder pattern areas
-      if (x < 8 && y < 8) continue;
-      if (x >= size - 8 && y < 8) continue;
-      if (x < 8 && y >= size - 8) continue;
-
-      // Deterministic fill based on position and hash
-      const seed = (x * 31 + y * 17 + hash) | 0;
-      modules[y][x] = (seed & 1) === 1 || (seed % 7 === 0);
-    }
-  }
-
-  return modules;
 }

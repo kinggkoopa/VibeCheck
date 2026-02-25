@@ -13,18 +13,21 @@ interface VoiceInputProps {
 
 type RecordingState = "idle" | "recording" | "processing" | "error";
 
+// Stable waveform bar heights (avoids Math.random() in render)
+const WAVEFORM_BARS = [
+  { height: 12, duration: 0.5 },
+  { height: 16, duration: 0.6 },
+  { height: 10, duration: 0.7 },
+  { height: 18, duration: 0.8 },
+  { height: 14, duration: 0.9 },
+];
+
 /**
  * VoiceInput — Mic button for speech-to-text prompt input.
  *
  * Strategy:
  * 1. Primary: Web Speech API (SpeechRecognition) — zero latency, free, works offline
  * 2. Fallback: Record audio blob → POST /api/transcribe-audio → OpenAI Whisper via user's key
- *
- * Handles:
- * - Browser compatibility detection
- * - Ambient noise / accent retry UI
- * - Visual recording indicator with waveform animation
- * - Auto-run toggle
  */
 export function VoiceInput({ onTranscript, onAutoRun, disabled }: VoiceInputProps) {
   const [state, setState] = useState<RecordingState>("idle");
@@ -34,10 +37,30 @@ export function VoiceInput({ onTranscript, onAutoRun, disabled }: VoiceInputProp
   const [useFallback, setUseFallback] = useState(false);
   const [supported, setSupported] = useState(true);
 
+  // Use ref for state to avoid stale closures in callbacks
+  const stateRef = useRef<RecordingState>("idle");
+  const autoRunRef = useRef(false);
+  const onTranscriptRef = useRef(onTranscript);
+  const onAutoRunRef = useRef(onAutoRun);
+
+  // Keep refs in sync
+  useEffect(() => { stateRef.current = state; }, [state]);
+  useEffect(() => { autoRunRef.current = autoRun; }, [autoRun]);
+  useEffect(() => { onTranscriptRef.current = onTranscript; }, [onTranscript]);
+  useEffect(() => { onAutoRunRef.current = onAutoRun; }, [onAutoRun]);
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const autoRunTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      if (autoRunTimerRef.current) clearTimeout(autoRunTimerRef.current);
+    };
+  }, []);
 
   // ── Check Web Speech API support ──
   useEffect(() => {
@@ -45,10 +68,18 @@ export function VoiceInput({ onTranscript, onAutoRun, disabled }: VoiceInputProp
       window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
       setUseFallback(true);
-      // Check if MediaRecorder is available for Whisper fallback
       if (!window.MediaRecorder) {
         setSupported(false);
       }
+    }
+  }, []);
+
+  // ── Helper: schedule auto-run with cleanup ──
+  const scheduleAutoRun = useCallback(() => {
+    if (autoRunRef.current && onAutoRunRef.current) {
+      autoRunTimerRef.current = setTimeout(() => {
+        onAutoRunRef.current?.();
+      }, 300);
     }
   }, []);
 
@@ -100,14 +131,12 @@ export function VoiceInput({ onTranscript, onAutoRun, disabled }: VoiceInputProp
     };
 
     recognition.onend = () => {
-      if (state === "recording") {
-        // Auto-stopped — deliver what we have
+      // Use ref to get current state (avoids stale closure)
+      if (stateRef.current === "recording") {
         const text = finalTranscript.trim();
         if (text) {
-          onTranscript(text);
-          if (autoRun && onAutoRun) {
-            setTimeout(onAutoRun, 300);
-          }
+          onTranscriptRef.current(text);
+          scheduleAutoRun();
         }
         setState("idle");
       }
@@ -118,7 +147,7 @@ export function VoiceInput({ onTranscript, onAutoRun, disabled }: VoiceInputProp
     setState("recording");
     setErrorMsg(null);
     setTranscript("");
-  }, [onTranscript, onAutoRun, autoRun, state]);
+  }, [scheduleAutoRun]);
 
   // ── Whisper fallback recording ──
   const startWhisperRecording = useCallback(async () => {
@@ -139,7 +168,6 @@ export function VoiceInput({ onTranscript, onAutoRun, disabled }: VoiceInputProp
       };
 
       mediaRecorder.onstop = async () => {
-        // Stop all tracks
         stream.getTracks().forEach((t) => t.stop());
 
         const blob = new Blob(chunksRef.current, { type: "audio/webm" });
@@ -161,6 +189,12 @@ export function VoiceInput({ onTranscript, onAutoRun, disabled }: VoiceInputProp
             body: formData,
           });
 
+          if (!res.ok) {
+            setErrorMsg("Transcription request failed.");
+            setState("error");
+            return;
+          }
+
           const data = await res.json();
           if (data.error) {
             setErrorMsg(data.error);
@@ -168,10 +202,8 @@ export function VoiceInput({ onTranscript, onAutoRun, disabled }: VoiceInputProp
           } else if (data.data?.text) {
             const text = data.data.text.trim();
             setTranscript(text);
-            onTranscript(text);
-            if (autoRun && onAutoRun) {
-              setTimeout(onAutoRun, 300);
-            }
+            onTranscriptRef.current(text);
+            scheduleAutoRun();
             setState("idle");
           } else {
             setErrorMsg("No text returned from transcription.");
@@ -198,7 +230,7 @@ export function VoiceInput({ onTranscript, onAutoRun, disabled }: VoiceInputProp
       );
       setState("error");
     }
-  }, [onTranscript, onAutoRun, autoRun]);
+  }, [scheduleAutoRun]);
 
   // ── Stop recording ──
   const stopRecording = useCallback(() => {
@@ -210,24 +242,20 @@ export function VoiceInput({ onTranscript, onAutoRun, disabled }: VoiceInputProp
       mediaRecorderRef.current.stop();
       mediaRecorderRef.current = null;
     }
-    if (state === "recording") {
-      // For Web Speech, onend handler delivers the transcript
-      // For Whisper, onstop handler processes the blob
-    }
-  }, [state]);
+  }, []);
 
   // ── Toggle recording ──
   const toggleRecording = useCallback(() => {
-    if (state === "recording") {
+    if (stateRef.current === "recording") {
       stopRecording();
-    } else if (state === "idle" || state === "error") {
+    } else if (stateRef.current === "idle" || stateRef.current === "error") {
       if (useFallback) {
         startWhisperRecording();
       } else {
         startWebSpeech();
       }
     }
-  }, [state, useFallback, startWebSpeech, startWhisperRecording, stopRecording]);
+  }, [useFallback, startWebSpeech, startWhisperRecording, stopRecording]);
 
   // ── Retry ──
   const handleRetry = useCallback(() => {
@@ -237,7 +265,7 @@ export function VoiceInput({ onTranscript, onAutoRun, disabled }: VoiceInputProp
   }, []);
 
   if (!supported) {
-    return null; // Browser doesn't support any speech input
+    return null;
   }
 
   return (
@@ -266,7 +294,6 @@ export function VoiceInput({ onTranscript, onAutoRun, disabled }: VoiceInputProp
         aria-label={state === "recording" ? "Stop recording" : "Start voice input"}
       >
         {state === "recording" ? (
-          // Stop icon with pulse ring
           <span className="relative flex h-5 w-5 items-center justify-center">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-danger/40" />
             <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
@@ -274,13 +301,11 @@ export function VoiceInput({ onTranscript, onAutoRun, disabled }: VoiceInputProp
             </svg>
           </span>
         ) : state === "processing" ? (
-          // Spinner
           <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <circle cx="12" cy="12" r="10" className="opacity-25" />
             <path d="M4 12a8 8 0 018-8" className="opacity-75" />
           </svg>
         ) : (
-          // Mic icon
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
             <rect x="9" y="2" width="6" height="11" rx="3" />
             <path d="M5 10a7 7 0 0014 0" />
@@ -291,17 +316,17 @@ export function VoiceInput({ onTranscript, onAutoRun, disabled }: VoiceInputProp
 
       {/* Status / controls area */}
       <div className="min-w-0 flex-1">
-        {/* Recording indicator */}
+        {/* Recording indicator — stable CSS animation, no Math.random() */}
         {state === "recording" && (
           <div className="flex items-center gap-2">
             <div className="flex gap-0.5">
-              {[...Array(5)].map((_, i) => (
+              {WAVEFORM_BARS.map((bar, i) => (
                 <div
                   key={i}
                   className="w-1 rounded-full bg-danger"
                   style={{
-                    height: `${8 + Math.random() * 12}px`,
-                    animation: `pulse ${0.5 + i * 0.1}s ease-in-out infinite alternate`,
+                    height: `${bar.height}px`,
+                    animation: `pulse ${bar.duration}s ease-in-out infinite alternate`,
                   }}
                 />
               ))}
@@ -366,7 +391,6 @@ export function VoiceInput({ onTranscript, onAutoRun, disabled }: VoiceInputProp
 }
 
 // ── Type declarations for Web Speech API ──
-// These aren't included in all TS lib targets, so we declare them minimally.
 declare global {
   interface Window {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

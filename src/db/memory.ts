@@ -126,11 +126,17 @@ export async function retrieveRelevantMemories(
     return searchMemories(embedding, maxResults);
   }
 
-  // Fallback: return most recent memories
+  // Fallback: return most recent memories (scoped to current user)
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return [];
+
   const { data, error } = await supabase
     .from("memories")
     .select("id, content, metadata, created_at")
+    .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(maxResults);
 

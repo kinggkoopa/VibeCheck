@@ -40,6 +40,18 @@ export function ShipButton({
 
   async function handleShip() {
     if (!repo.trim() || !filename.trim() || !title.trim()) return;
+
+    // Client-side validation
+    const REPO_REGEX = /^[a-zA-Z0-9._-]+\/[a-zA-Z0-9._-]+$/;
+    if (!REPO_REGEX.test(repo.trim())) {
+      setError("Repository must be in format 'owner/repo'");
+      return;
+    }
+    if (filename.includes("..")) {
+      setError("Filename must not contain '..'");
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setResult(null);
@@ -58,6 +70,11 @@ export function ShipButton({
         }),
       });
 
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error ?? `Request failed (${res.status})`);
+        return;
+      }
       const data = await res.json();
       if (data.error) {
         setError(data.error);

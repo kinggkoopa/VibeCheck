@@ -90,7 +90,7 @@ export function PromptOptimizer({ initialLibrary }: PromptOptimizerProps) {
   }, [rawPrompt, pending]);
 
   useHotkeys([
-    { combo: { key: "Enter", meta: true }, handler: triggerOptimize },
+    { combo: { key: "Enter", meta: true }, handler: triggerOptimize, allowInEditable: true },
   ]);
 
   // ── Fast suggest (debounced) ──

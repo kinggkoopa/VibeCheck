@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 interface TourStep {
   title: string;
   description: string;
-  target?: string; // CSS selector for the element to highlight
 }
 
 const TOUR_STEPS: TourStep[] = [
@@ -18,31 +17,26 @@ const TOUR_STEPS: TourStep[] = [
     title: "1. Configure API Keys",
     description:
       "Start by adding your API key in Settings. We support Anthropic, OpenRouter, Groq, and OpenAI. Your keys are encrypted with pgcrypto.",
-    target: '[href="/dashboard/settings"]',
   },
   {
     title: "2. Optimize Prompts",
     description:
       "Turn rough ideas into production-grade prompts. Choose from 6 strategies including chain-of-thought and few-shot examples.",
-    target: '[href="/dashboard/optimizer"]',
   },
   {
     title: "3. Run Agent Swarm",
     description:
       "Get multi-angle code review from 4 specialist agents: Architect, Security, UX, and Performance.",
-    target: '[href="/dashboard/agents"]',
   },
   {
     title: "4. Auto-Iterate",
     description:
       "Automatically improve your code through critique-test-preview-refine loops until it passes the vibe check.",
-    target: '[href="/dashboard/iterate"]',
   },
   {
     title: "5. Memory Vault",
     description:
       "Save context that automatically enriches your future prompts using vector embeddings.",
-    target: '[href="/dashboard/memory"]',
   },
   {
     title: "Keyboard Shortcuts",
@@ -53,30 +47,62 @@ const TOUR_STEPS: TourStep[] = [
 
 const TOUR_KEY = "metavibe-tour-completed";
 
+function safeGetItem(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeSetItem(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // localStorage inaccessible (incognito, SecurityError, etc.)
+  }
+}
+
 export function OnboardingTour() {
   const [currentStep, setCurrentStep] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    // Show tour only if not completed before
-    const completed = localStorage.getItem(TOUR_KEY);
+    const completed = safeGetItem(TOUR_KEY);
     if (!completed) {
       setIsVisible(true);
     }
   }, []);
 
-  function handleNext() {
+  const handleNext = useCallback(() => {
     if (currentStep < TOUR_STEPS.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
-      handleDismiss();
+      setIsVisible(false);
+      safeSetItem(TOUR_KEY, "true");
     }
-  }
+  }, [currentStep]);
 
-  function handleDismiss() {
+  const handleDismiss = useCallback(() => {
     setIsVisible(false);
-    localStorage.setItem(TOUR_KEY, "true");
-  }
+    safeSetItem(TOUR_KEY, "true");
+  }, []);
+
+  // Keyboard support: Escape to dismiss, arrow keys to navigate
+  useEffect(() => {
+    if (!isVisible) return;
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        handleDismiss();
+      } else if (e.key === "ArrowRight" || e.key === "Enter") {
+        handleNext();
+      } else if (e.key === "ArrowLeft" && currentStep > 0) {
+        setCurrentStep((s) => s - 1);
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isVisible, currentStep, handleDismiss, handleNext]);
 
   if (!isVisible) return null;
 
@@ -84,8 +110,17 @@ export function OnboardingTour() {
   const isLast = currentStep === TOUR_STEPS.length - 1;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="w-full max-w-md rounded-xl border border-border bg-background p-6 shadow-2xl">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+      onClick={handleDismiss}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Onboarding tour"
+    >
+      <div
+        className="w-full max-w-md rounded-xl border border-border bg-background p-6 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Progress */}
         <div className="mb-4 flex gap-1">
           {TOUR_STEPS.map((_, i) => (

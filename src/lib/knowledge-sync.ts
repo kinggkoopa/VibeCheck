@@ -193,18 +193,35 @@ export async function searchObsidian(
 
   try {
     // Dynamic import fs — only works in Node.js (local dev)
-    const { readdir, readFile, stat } = await import("fs/promises");
-    const { join, basename } = await import("path");
+    const { readdir, readFile, stat, realpath } = await import("fs/promises");
+    const { join, basename, resolve } = await import("path");
+
+    // Validate vault path — resolve to canonical path to prevent traversal
+    const canonicalVault = await realpath(resolve(vaultPath));
 
     const queryLower = query.toLowerCase();
-    const files = (await readdir(vaultPath, { recursive: true })) as string[];
+    const files = (await readdir(canonicalVault, { recursive: true })) as string[];
+
+    let scanned = 0;
+    const MAX_FILES_SCAN = 1000;
 
     for (const file of files) {
       const filePath = String(file);
       if (!filePath.endsWith(".md")) continue;
 
-      const fullPath = join(vaultPath, filePath);
-      const content = await readFile(fullPath, "utf-8");
+      // Prevent path traversal within file entries
+      if (filePath.includes("..")) continue;
+
+      const fullPath = join(canonicalVault, filePath);
+
+      // Ensure resolved path stays within the vault
+      const resolvedPath = resolve(fullPath);
+      if (!resolvedPath.startsWith(canonicalVault)) continue;
+
+      // Cap the number of files we scan to prevent unbounded I/O
+      if (++scanned > MAX_FILES_SCAN) break;
+
+      const content = await readFile(resolvedPath, "utf-8");
 
       // Simple relevance check — title or content matches query keywords
       const titleMatch = basename(filePath, ".md")
@@ -213,7 +230,7 @@ export async function searchObsidian(
       const contentMatch = content.toLowerCase().includes(queryLower);
 
       if (titleMatch || contentMatch) {
-        const fileStat = await stat(fullPath);
+        const fileStat = await stat(resolvedPath);
         notes.push({
           source: "obsidian",
           title: basename(filePath, ".md"),

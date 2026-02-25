@@ -42,8 +42,9 @@ const nextConfig: NextConfig = {
     },
   ],
 
-  // Enable production source maps for Sentry
-  productionBrowserSourceMaps: true,
+  // NOTE: Do NOT enable productionBrowserSourceMaps — it exposes source code.
+  // For Sentry, use @sentry/nextjs with hideSourceMaps: true to upload
+  // source maps without exposing them to end users.
 };
 
 export default nextConfig;

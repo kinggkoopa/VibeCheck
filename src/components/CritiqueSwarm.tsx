@@ -50,7 +50,7 @@ export function CritiqueSwarm() {
   }, [code, pending]);
 
   useHotkeys([
-    { combo: { key: "Enter", meta: true }, handler: triggerSwarm },
+    { combo: { key: "Enter", meta: true }, handler: triggerSwarm, allowInEditable: true },
   ]);
 
   function handleRunSwarm(e: React.FormEvent) {

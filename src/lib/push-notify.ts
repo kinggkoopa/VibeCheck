@@ -5,8 +5,8 @@
  *
  * Handles:
  * - Service worker registration
- * - Push subscription management
- * - Local notification fallback (Notification API)
+ * - Local notification via service worker (works when backgrounded)
+ * - Notification permission management
  */
 
 /** Register the service worker and request notification permissions. */
@@ -39,29 +39,30 @@ export async function requestNotificationPermission(): Promise<boolean> {
   return result === "granted";
 }
 
-/** Show a local notification (doesn't require push subscription). */
-export function showLocalNotification(
+/**
+ * Show a notification via the service worker registration.
+ * This works even when the app is backgrounded, unlike `new Notification()`.
+ */
+export async function showLocalNotification(
   title: string,
   options?: {
     body?: string;
     tag?: string;
     url?: string;
   }
-): void {
+): Promise<void> {
   if (typeof window === "undefined" || !("Notification" in window)) return;
   if (Notification.permission !== "granted") return;
 
-  const notification = new Notification(title, {
-    body: options?.body,
-    icon: "/icon-192.png",
-    tag: options?.tag ?? "metavibe-local",
-  });
-
-  if (options?.url) {
-    notification.onclick = () => {
-      window.focus();
-      window.location.href = options.url!;
-    };
+  // Use service worker notification for better background support
+  const registration = await navigator.serviceWorker?.ready;
+  if (registration) {
+    await registration.showNotification(title, {
+      body: options?.body,
+      icon: "/icon-192.png",
+      tag: options?.tag ?? "metavibe-local",
+      data: { url: options?.url ?? "/dashboard" },
+    });
   }
 }
 

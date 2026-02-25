@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { timingSafeEqual } from "crypto";
 import { analyzeRecentSessions, logImprovement } from "@/lib/meta-improver";
+import { checkApiRateLimit } from "@/lib/security";
 
 /**
  * POST /api/improve — Self-improving meta-agent.
@@ -12,6 +14,14 @@ import { analyzeRecentSessions, logImprovement } from "@/lib/meta-improver";
  *
  * GET /api/improve — Returns latest improvement logs.
  */
+
+function isValidCronSecret(provided: string | null): boolean {
+  const expected = process.env.CRON_SECRET;
+  if (!expected || !provided) return false;
+  if (expected.length !== provided.length) return false;
+  return timingSafeEqual(Buffer.from(provided), Buffer.from(expected));
+}
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -20,9 +30,7 @@ export async function POST(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     // Support both authenticated user and cron (via secret header)
-    const cronSecret = request.headers.get("x-cron-secret");
-    const isCron =
-      cronSecret && cronSecret === process.env.CRON_SECRET;
+    const isCron = isValidCronSecret(request.headers.get("x-cron-secret"));
 
     if (!user && !isCron) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -35,6 +43,9 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    const rateLimited = await checkApiRateLimit(userId);
+    if (rateLimited) return rateLimited;
 
     const analysis = await analyzeRecentSessions(userId);
 

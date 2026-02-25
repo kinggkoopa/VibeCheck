@@ -54,6 +54,8 @@ const TASK_LABELS: Record<string, string> = {
  * - Large touch-friendly approve/cancel buttons
  * - Simplified result display
  */
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export function RemoteSessionView({ sessionId }: { sessionId: string }) {
   const [session, setSession] = useState<SessionData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -62,8 +64,20 @@ export function RemoteSessionView({ sessionId }: { sessionId: string }) {
 
   // ── Fetch session ──
   const fetchSession = useCallback(async () => {
+    // Validate sessionId is a UUID before using in URL
+    if (!UUID_REGEX.test(sessionId)) {
+      setError("Invalid session ID");
+      setLoading(false);
+      return;
+    }
+
     try {
-      const res = await fetch(`/api/remote-session?id=${sessionId}`);
+      const res = await fetch(`/api/remote-session?id=${encodeURIComponent(sessionId)}`);
+      if (!res.ok) {
+        setError(`Failed to load session (${res.status})`);
+        setLoading(false);
+        return;
+      }
       const data = await res.json();
       if (data.data && !Array.isArray(data.data)) {
         setSession(data.data);
@@ -114,11 +128,16 @@ export function RemoteSessionView({ sessionId }: { sessionId: string }) {
   async function updateStatus(status: SessionStatus) {
     setActionLoading(true);
     try {
-      await fetch("/api/remote-session", {
+      const res = await fetch("/api/remote-session", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ session_id: sessionId, status }),
       });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error ?? `Failed to update session (${res.status})`);
+        return;
+      }
       setSession((prev) => (prev ? { ...prev, status } : null));
     } catch {
       setError("Failed to update session");

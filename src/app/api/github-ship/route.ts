@@ -53,6 +53,40 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate repo format (prevent path traversal)
+    const REPO_REGEX = /^[a-zA-Z0-9._-]+\/[a-zA-Z0-9._-]+$/;
+    if (!REPO_REGEX.test(repo)) {
+      return NextResponse.json(
+        { error: "repo must be in format 'owner/repo' (alphanumeric, dots, hyphens, underscores only)" },
+        { status: 400 }
+      );
+    }
+
+    // Validate filename (prevent path traversal)
+    if (filename.includes("..") || filename.startsWith("/")) {
+      return NextResponse.json(
+        { error: "filename must not contain '..' or start with '/'" },
+        { status: 400 }
+      );
+    }
+
+    // Validate base_branch (prevent path traversal)
+    const BRANCH_REGEX = /^[a-zA-Z0-9._\/-]+$/;
+    if (!BRANCH_REGEX.test(base_branch) || base_branch.includes("..")) {
+      return NextResponse.json(
+        { error: "Invalid base_branch name" },
+        { status: 400 }
+      );
+    }
+
+    // Reject oversized code payloads (1MB limit)
+    if (code.length > 1_000_000) {
+      return NextResponse.json(
+        { error: "Code payload too large (max 1MB)" },
+        { status: 400 }
+      );
+    }
+
     // Get GitHub token from user settings (stored in user_settings table)
     const { data: settings } = await supabase
       .from("user_settings")
@@ -80,13 +114,6 @@ export async function POST(request: NextRequest) {
 
     const apiBase = "https://api.github.com";
     const [owner, repoName] = repo.split("/");
-
-    if (!owner || !repoName) {
-      return NextResponse.json(
-        { error: "repo must be in format 'owner/repo'" },
-        { status: 400 }
-      );
-    }
 
     // 1. Get base branch SHA
     const refRes = await fetch(

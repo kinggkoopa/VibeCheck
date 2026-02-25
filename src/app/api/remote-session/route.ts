@@ -84,20 +84,11 @@ export async function POST(request: NextRequest) {
     });
 
     if (insertError) {
-      // Table may not exist yet — create it dynamically isn't possible,
-      // so fall back to in-memory tracking via analytics
-      console.warn("[remote-session] Insert failed, using analytics fallback:", insertError.message);
-
-      await supabase.from("analytics").insert({
-        user_id: user.id,
-        event_type: "remote_session_created",
-        metadata: {
-          session_id: sessionId,
-          task_type,
-          status: "pending",
-          expires_at: expiresAt.toISOString(),
-        },
-      });
+      console.error("[remote-session] Insert failed:", insertError.message);
+      return NextResponse.json(
+        { error: "Failed to create session. Ensure the remote_sessions table exists." },
+        { status: 500 }
+      );
     }
 
     // Generate session URL
@@ -206,6 +197,14 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
+    // Validate result payload size (1MB limit)
+    if (result !== undefined && JSON.stringify(result).length > 1_000_000) {
+      return NextResponse.json(
+        { error: "Result payload too large (max 1MB)" },
+        { status: 400 }
+      );
+    }
+
     const updatePayload: Record<string, unknown> = {
       updated_at: new Date().toISOString(),
     };
@@ -249,11 +248,12 @@ async function executeRemoteTask(
   userId: string,
   headers: Headers
 ) {
-  // Get session details
+  // Get session details (filter by user_id for authorization)
   const { data: session } = await supabase
     .from("remote_sessions")
     .select("*")
     .eq("id", sessionId)
+    .eq("user_id", userId)
     .single();
 
   if (!session) return;

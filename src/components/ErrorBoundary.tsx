@@ -52,14 +52,22 @@ export class ErrorBoundary extends Component<Props, State> {
             Something went wrong
           </h2>
           <p className="text-sm text-muted">
-            {this.state.error?.message ?? "An unexpected error occurred."}
+            An unexpected error occurred. Try refreshing the page.
           </p>
-          <button
-            onClick={() => this.setState({ hasError: false, error: null })}
-            className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-dark"
-          >
-            Try Again
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={() => this.setState({ hasError: false, error: null })}
+              className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-dark"
+            >
+              Try Again
+            </button>
+            <button
+              onClick={() => window.location.reload()}
+              className="rounded-lg border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-surface-elevated"
+            >
+              Refresh Page
+            </button>
+          </div>
         </div>
       );
     }

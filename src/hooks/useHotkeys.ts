@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useCallback } from "react";
+import { useEffect, useRef } from "react";
 
 type KeyCombo = {
   key: string;
@@ -16,28 +16,38 @@ type HotkeyHandler = (e: KeyboardEvent) => void;
  * useHotkeys — Register keyboard shortcuts.
  *
  * Supports Cmd/Ctrl normalization (uses Meta on Mac, Ctrl on others).
- * Ignores events when focus is in input/textarea/contenteditable.
+ * By default skips events in input/textarea/contenteditable.
+ * Pass `allowInEditable: true` on a binding to opt out of this filter.
+ *
+ * Uses a ref internally so the bindings array doesn't need to be stable.
  *
  * Usage:
  *   useHotkeys([
  *     { combo: { key: "k", meta: true }, handler: () => openSearch() },
- *     { combo: { key: "Enter", meta: true }, handler: () => submitForm() },
- *     { combo: { key: "/", meta: true }, handler: () => toggleHelp() },
+ *     { combo: { key: "Enter", meta: true }, handler: () => submitForm(), allowInEditable: true },
  *   ]);
  */
 export function useHotkeys(
-  bindings: { combo: KeyCombo; handler: HotkeyHandler }[]
+  bindings: { combo: KeyCombo; handler: HotkeyHandler; allowInEditable?: boolean }[]
 ) {
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      // Skip if focus is in an editable element
-      const tag = (e.target as HTMLElement)?.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
-      if ((e.target as HTMLElement)?.isContentEditable) return;
+  // Use ref to always read the latest bindings without re-attaching the listener
+  const bindingsRef = useRef(bindings);
+  bindingsRef.current = bindings;
 
-      for (const { combo, handler } of bindings) {
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      const tag = (e.target as HTMLElement)?.tagName;
+      const isEditable =
+        tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" ||
+        (e.target as HTMLElement)?.isContentEditable;
+
+      for (const { combo, handler, allowInEditable } of bindingsRef.current) {
+        // Skip editable elements unless explicitly allowed
+        if (isEditable && !allowInEditable) continue;
+
+        // Modifier matching — if specified, require it; if not, require absence
         const modKey = combo.meta || combo.ctrl;
-        const modMatch = modKey ? e.metaKey || e.ctrlKey : true;
+        const modMatch = modKey ? (e.metaKey || e.ctrlKey) : !(e.metaKey || e.ctrlKey);
         const shiftMatch = combo.shift ? e.shiftKey : !e.shiftKey;
         const altMatch = combo.alt ? e.altKey : !e.altKey;
 
@@ -52,12 +62,9 @@ export function useHotkeys(
           return;
         }
       }
-    },
-    [bindings]
-  );
+    }
 
-  useEffect(() => {
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [handleKeyDown]);
+  }, []);
 }
