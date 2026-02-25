@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { href: "/dashboard/memory", label: "Memory Vault" },
   { href: "/dashboard/analytics", label: "Analytics" },
   { href: "/dashboard/remote", label: "Remote Control" },
+  { href: "/dashboard/clone", label: "Clone Setup" },
 ] as const;
 
 export function Sidebar() {

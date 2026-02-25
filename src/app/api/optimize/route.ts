@@ -72,7 +72,8 @@ export async function POST(request: NextRequest) {
     const systemPrompt = await injectMemoryContext(basePrompt, prompt);
 
     // Try providers in order of preference until one works
-    const providers = ["anthropic", "openrouter", "openai", "groq"] as const;
+    // Ollama (local) is last — serves as offline/free fallback
+    const providers = ["anthropic", "openrouter", "openai", "groq", "ollama"] as const;
     let optimized: string | null = null;
     let lastError: string | null = null;
 

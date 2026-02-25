@@ -3,6 +3,7 @@ import { Sidebar } from "./sidebar";
 import { UserMenu } from "./user-menu";
 import { NoKeyBanner } from "@/components/no-key-banner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { OfflineBanner } from "@/components/OfflineBanner";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
@@ -15,6 +16,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <Suspense fallback={null}>
           <NoKeyBanner />
         </Suspense>
+        <OfflineBanner />
         <main id="main-content" className="flex-1 overflow-y-auto p-6">
           <ErrorBoundary>{children}</ErrorBoundary>
         </main>

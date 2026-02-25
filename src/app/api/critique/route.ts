@@ -52,7 +52,8 @@ export async function POST(request: NextRequest) {
     const systemPrompt = await injectMemoryContext(BASE_CRITIQUE_PROMPT, code);
 
     // Try providers in preference order
-    const providers = ["anthropic", "openrouter", "openai", "groq"] as const;
+    // Ollama (local) is last — serves as offline/free fallback
+    const providers = ["anthropic", "openrouter", "openai", "groq", "ollama"] as const;
     let rawResult: string | null = null;
 
     for (const provider of providers) {

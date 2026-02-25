@@ -54,12 +54,13 @@ export async function POST(request: NextRequest) {
               "You are a helpful coding assistant. Give a brief, actionable suggestion (max 100 words). Be concise.",
           };
 
-          // Try fast providers first (Groq > OpenRouter > Anthropic > OpenAI)
+          // Try fast providers first (Groq > OpenRouter > Anthropic > OpenAI > Ollama)
           const fastProviders = [
             "groq",
             "openrouter",
             "anthropic",
             "openai",
+            "ollama",
           ] as const;
 
           for (const provider of fastProviders) {
