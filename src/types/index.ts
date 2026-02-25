@@ -21,7 +21,8 @@ export type OptimizationStrategy =
   | "specificity"
   | "chain-of-thought"
   | "few-shot"
-  | "role-based";
+  | "role-based"
+  | "best-practice";
 
 /** A prompt optimization record */
 export interface PromptOptimization {

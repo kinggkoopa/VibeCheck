@@ -5,7 +5,7 @@ import { injectMemoryContext } from "@/db/memory";
 import type { OptimizationStrategy } from "@/types";
 
 const VALID_STRATEGIES = new Set([
-  "clarity", "specificity", "chain-of-thought", "few-shot", "role-based",
+  "clarity", "specificity", "chain-of-thought", "few-shot", "role-based", "best-practice",
 ]);
 
 const STRATEGY_PROMPTS: Record<OptimizationStrategy, string> = {
@@ -28,6 +28,17 @@ Return ONLY the optimized prompt with examples.`,
   "role-based": `You are a prompt engineering expert. Rewrite the user's prompt with
 an expert persona/role framing. Define the AI's role, expertise level, and behavioral
 guidelines. Return ONLY the optimized prompt.`,
+
+  "best-practice": `You are a world-class prompt engineering expert. Apply ALL best practices to rewrite the user's prompt:
+
+1. Add a clear expert persona/role definition
+2. Structure with chain-of-thought reasoning (step-by-step)
+3. Include 1-2 concrete input/output examples (few-shot)
+4. Add explicit constraints, edge cases, and quality criteria
+5. Specify the exact output format expected
+
+The result should be a production-grade prompt that maximizes LLM performance.
+Return ONLY the optimized prompt.`,
 };
 
 /** POST /api/optimize — optimize a prompt using the user's BYOK key */
