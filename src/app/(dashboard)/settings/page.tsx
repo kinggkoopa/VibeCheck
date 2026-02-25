@@ -1,5 +1,6 @@
 import { listUserKeys } from "@/lib/crypto/keys";
 import { KeyManager } from "@/features/settings/key-manager";
+import { SkeletonSelector } from "@/components/SkeletonSelector";
 
 export const dynamic = "force-dynamic";
 
@@ -7,16 +8,33 @@ export default async function SettingsPage() {
   const keys = await listUserKeys();
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="mx-auto max-w-2xl space-y-10">
       <div>
-        <h1 className="text-2xl font-bold">API Key Settings</h1>
+        <h1 className="text-2xl font-bold">Settings</h1>
         <p className="mt-1 text-sm text-muted">
-          Bring Your Own Key (BYOK) — your keys are encrypted at rest with
-          pgcrypto and never leave the database unencrypted.
+          Configure API keys, choose project templates, and manage your setup.
         </p>
       </div>
 
-      <KeyManager initialKeys={keys} />
+      {/* ── API Keys ── */}
+      <section>
+        <h2 className="mb-1 text-lg font-semibold">API Keys (BYOK)</h2>
+        <p className="mb-4 text-sm text-muted">
+          Your keys are encrypted at rest with pgcrypto and never leave the
+          database unencrypted.
+        </p>
+        <KeyManager initialKeys={keys} />
+      </section>
+
+      {/* ── Project Skeleton / Bootstrap ── */}
+      <section>
+        <h2 className="mb-1 text-lg font-semibold">Project Skeleton</h2>
+        <p className="mb-4 text-sm text-muted">
+          Choose a starter template for new projects. All options are free,
+          open-source, and compatible with Supabase + shadcn/ui.
+        </p>
+        <SkeletonSelector />
+      </section>
     </div>
   );
 }
