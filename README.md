@@ -13,6 +13,7 @@ A personal AI-powered coding assistant built with **Next.js 15**, **Supabase**, 
 - **Memory Vault** — pgvector-powered context that auto-enriches prompts
 - **Tool Belt** — Export to v0, Replit, CodeSandbox, StackBlitz, GitHub Gist
 - **Analytics Dashboard** — Track usage patterns and improvement suggestions
+- **Remote Control** — Start tasks on laptop, review/approve from phone via QR code
 - **VS Code Extension** — IDE integration with command palette
 - **CLI** — Terminal interface for all features
 
