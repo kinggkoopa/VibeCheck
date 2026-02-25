@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { href: "/dashboard/agents", label: "Agent Swarm" },
   { href: "/dashboard/critique", label: "Code Critique" },
   { href: "/dashboard/iterate", label: "Auto-Iterate" },
+  { href: "/dashboard/tools", label: "Tool Belt" },
   { href: "/dashboard/memory", label: "Memory Vault" },
   { href: "/dashboard/analytics", label: "Analytics" },
 ] as const;
