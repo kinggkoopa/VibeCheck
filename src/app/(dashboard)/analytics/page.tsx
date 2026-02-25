@@ -1,5 +1,6 @@
 import { getAnalyticsOverview } from "@/features/analytics/actions";
 import { ProfileDashboard } from "@/components/ProfileDashboard";
+import { UsageTracker } from "@/components/UsageTracker";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,7 @@ export default async function AnalyticsPage() {
         </p>
       </div>
 
+      <UsageTracker />
       <ProfileDashboard overview={overview} />
     </div>
   );

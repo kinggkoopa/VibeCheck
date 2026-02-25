@@ -1,10 +1,24 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { PWARegister } from "@/components/PWARegister";
 
 export const metadata: Metadata = {
   title: "MetaVibeCoder",
   description:
     "S+++ meta-vibe-coding tool — optimize prompts, orchestrate agents, ship better code",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "MetaVibe",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#6d28d9",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export default function RootLayout({
@@ -19,6 +33,7 @@ export default function RootLayout({
           Skip to content
         </a>
         {children}
+        <PWARegister />
       </body>
     </html>
   );
