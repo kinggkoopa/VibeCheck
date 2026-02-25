@@ -1,6 +1,8 @@
 import { listUserKeys } from "@/lib/crypto/keys";
 import { KeyManager } from "@/features/settings/key-manager";
 
+export const dynamic = "force-dynamic";
+
 export default async function SettingsPage() {
   const keys = await listUserKeys();
 
