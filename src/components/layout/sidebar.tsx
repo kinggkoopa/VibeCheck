@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { href: "/dashboard/optimizer", label: "Prompt Optimizer" },
   { href: "/dashboard/agents", label: "Agent Swarm" },
   { href: "/dashboard/critique", label: "Code Critique" },
+  { href: "/dashboard/iterate", label: "Auto-Iterate" },
   { href: "/dashboard/memory", label: "Memory Vault" },
   { href: "/dashboard/analytics", label: "Analytics" },
 ] as const;
