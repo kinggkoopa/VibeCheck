@@ -171,12 +171,26 @@ export async function injectMemoryContext(
   maxMemories: number = 3
 ): Promise<string> {
   try {
+    let enriched = systemPrompt;
+
+    // 1. Vector memory context
     const memories = await retrieveRelevantMemories(userMessage, maxMemories);
+    if (memories.length > 0) {
+      enriched += formatMemoryContext(memories);
+    }
 
-    if (memories.length === 0) return systemPrompt;
+    // 2. Knowledge sync (Obsidian/Notion) — non-blocking
+    try {
+      const { searchKnowledge } = await import("@/lib/knowledge-sync");
+      const knowledgeContext = await searchKnowledge(userMessage);
+      if (knowledgeContext) {
+        enriched += knowledgeContext;
+      }
+    } catch {
+      // Knowledge sync not configured or failed — skip silently
+    }
 
-    const contextBlock = formatMemoryContext(memories);
-    return systemPrompt + contextBlock;
+    return enriched;
   } catch {
     // If memory retrieval fails, return the original prompt without context.
     // Memory is an enhancement, not a requirement.

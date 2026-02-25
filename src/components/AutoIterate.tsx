@@ -7,6 +7,7 @@ import {
   type IterationStep,
   type IterationPhase,
 } from "@/features/iterate/actions";
+import { ShipButton } from "@/components/ShipButton";
 
 // ── Phase display config ──
 
@@ -164,14 +165,20 @@ export function AutoIterate() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold">Final Code</h3>
-                <button
-                  onClick={() =>
-                    navigator.clipboard.writeText(result.finalCode)
-                  }
-                  className="text-xs text-primary-light hover:underline"
-                >
-                  Copy
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() =>
+                      navigator.clipboard.writeText(result.finalCode)
+                    }
+                    className="text-xs text-primary-light hover:underline"
+                  >
+                    Copy
+                  </button>
+                  <ShipButton
+                    code={result.finalCode}
+                    title={`Auto-iterated code (vibe: ${result.finalVibeScore}/100)`}
+                  />
+                </div>
               </div>
               <div className="max-h-96 overflow-y-auto rounded-lg border border-border bg-surface p-4">
                 <pre className="whitespace-pre-wrap font-mono text-sm">
