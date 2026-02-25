@@ -1,6 +1,7 @@
 import { getAnalyticsOverview } from "@/features/analytics/actions";
 import { ProfileDashboard } from "@/components/ProfileDashboard";
 import { UsageTracker } from "@/components/UsageTracker";
+import { VibeJournal } from "@/components/VibeJournal";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +19,7 @@ export default async function AnalyticsPage() {
       </div>
 
       <UsageTracker />
+      <VibeJournal />
       <ProfileDashboard overview={overview} />
     </div>
   );

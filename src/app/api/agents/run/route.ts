@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     const rateLimited = await checkLlmRateLimit(user.id);
     if (rateLimited) return rateLimited;
 
-    const { task, provider, max_iterations } = await request.json();
+    const { task, provider, max_iterations, enable_inspiration, enable_animation_critic } = await request.json();
 
     if (!task || typeof task !== "string" || task.trim().length < 10) {
       return NextResponse.json(
@@ -59,8 +59,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Execute the LangGraph swarm
-    const result = await runSwarm(provider as LLMProvider, task.trim(), iterations);
+    // Execute the LangGraph swarm (with optional creative agents)
+    const result = await runSwarm(provider as LLMProvider, task.trim(), iterations, {
+      enableInspiration: enable_inspiration === true,
+      enableAnimationCritic: enable_animation_critic === true,
+    });
 
     // Update the run record with results
     await supabase

@@ -8,6 +8,7 @@ import {
 } from "@/features/critique/actions";
 import { useHotkeys } from "@/hooks/useHotkeys";
 import { VoiceInput } from "@/components/VoiceInput";
+import { VoiceResponse } from "@/components/VoiceResponse";
 
 // ── Agent display config ──
 
@@ -287,8 +288,15 @@ export function CritiqueSwarm() {
               </div>
             )}
 
+            {/* Voice Response — Speak Report */}
+            <div className="mt-4 border-t border-border pt-4">
+              <VoiceResponse
+                text={`Critique Report. Overall score: ${report.overall_score} out of 100. ${report.summary}. ${report.findings.map((f) => `${f.severity}: ${f.title}. ${f.detail}`).join(". ")}`}
+              />
+            </div>
+
             {/* Actions */}
-            <div className="mt-6 flex gap-3 border-t border-border pt-4">
+            <div className="mt-4 flex gap-3 border-t border-border pt-4">
               <button
                 onClick={() => {
                   const text = `Critique Report (${report.overall_score}/100)\n\n${report.summary}\n\n${report.findings.map((f) => `[${f.severity.toUpperCase()}] ${f.title}: ${f.detail}`).join("\n")}`;

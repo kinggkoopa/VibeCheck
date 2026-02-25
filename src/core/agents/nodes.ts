@@ -95,6 +95,40 @@ export function createTesterNode(provider: LLMProvider) {
   };
 }
 
+/** Inspiration Agent: suggests creative CSS/UI patterns from Jhey references */
+export function createInspirationNode(provider: LLMProvider) {
+  return async (state: SwarmState): Promise<Partial<SwarmState>> => {
+    const result = await complete(
+      provider,
+      AGENT_PROMPTS.inspiration,
+      `Task: ${state.task}\n\nPlan:\n${state.plan}\n\nSuggest creative CSS/UI approaches for this implementation.`,
+      { temperature: 0.8 }
+    );
+
+    return {
+      inspiration: result,
+      messages: [msg("Inspiration", "inspiration", result)],
+    };
+  };
+}
+
+/** Animation Critic: evaluates animations and transitions for quality */
+export function createAnimationCriticNode(provider: LLMProvider) {
+  return async (state: SwarmState): Promise<Partial<SwarmState>> => {
+    const result = await complete(
+      provider,
+      AGENT_PROMPTS["animation-critic"],
+      `Task: ${state.task}\n\nCode:\n${state.code}\n\nReview the animations and transitions in this code.`,
+      { temperature: 0.4 }
+    );
+
+    return {
+      animationReview: result,
+      messages: [msg("Animation Critic", "animation-critic", result)],
+    };
+  };
+}
+
 /**
  * Routing function: decides whether to iterate or complete.
  * Returns "iterate" if the review score is < 80 and we haven't hit max iterations.

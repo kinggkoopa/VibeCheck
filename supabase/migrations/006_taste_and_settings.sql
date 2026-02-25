@@ -43,6 +43,12 @@ create table if not exists public.user_settings (
   github_token text,
   github_default_repo text,
   push_subscription jsonb,
+  reference_folder_path text,
+  reference_index jsonb,
+  tts_voice text not null default 'default',
+  tts_rate real not null default 1.0,
+  tts_pitch real not null default 1.0,
+  tts_auto_speak boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

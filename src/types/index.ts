@@ -37,7 +37,7 @@ export interface PromptOptimization {
 }
 
 /** Agent roles in the swarm */
-export type AgentRole = "planner" | "coder" | "reviewer" | "tester";
+export type AgentRole = "planner" | "coder" | "reviewer" | "tester" | "inspiration" | "animation-critic";
 
 /** A message from one agent in a swarm run */
 export interface SwarmMessage {

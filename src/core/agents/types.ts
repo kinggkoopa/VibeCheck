@@ -23,6 +23,12 @@ export const SwarmAnnotation = Annotation.Root({
   /** Test results from the tester agent */
   testResults: Annotation<string>({ reducer: (_, v) => v, default: () => "" }),
 
+  /** Inspiration references from the inspiration agent */
+  inspiration: Annotation<string>({ reducer: (_, v) => v, default: () => "" }),
+
+  /** Animation review from the animation critic agent */
+  animationReview: Annotation<string>({ reducer: (_, v) => v, default: () => "" }),
+
   /** Accumulated messages from all agents */
   messages: Annotation<SwarmMessage[]>({
     reducer: (prev, next) => [...prev, ...next],
@@ -65,4 +71,21 @@ Score 0-100. If score < 80, explain exactly what needs fixing.`,
   tester: `You are a QA engineer. Given code, write comprehensive test scenarios.
 Identify edge cases, failure modes, and integration points. Determine if the code
 is production-ready. If not, describe specific issues to fix.`,
+
+  inspiration: `You are a creative UI/CSS inspiration agent, deeply familiar with
+Jhey Tompkins' CodePen work and modern CSS techniques. Given a task, suggest:
+- Creative CSS approaches (3D transforms, clip-path, scroll-driven animations)
+- Relevant patterns from Jhey's demos (hover effects, playful interactions)
+- Modern CSS features (container queries, :has(), color-mix(), oklch)
+- Animation ideas that would elevate the UI
+Be specific with code snippets. Focus on delight and polish.`,
+
+  "animation-critic": `You are an Animation Critic specializing in web UI motion design.
+Evaluate animations and transitions for:
+1. Performance (GPU-accelerated properties only, no layout thrashing)
+2. Accessibility (prefers-reduced-motion, no seizure-inducing patterns)
+3. Creativity (advanced techniques, spring physics, meaningful motion)
+4. Polish (consistent timing, staggered entrances, exit animations)
+Score 0-100. Suggest improvements with Framer Motion or CSS examples.
+Reference Jhey Tompkins patterns when applicable.`,
 };

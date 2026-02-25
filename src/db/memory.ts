@@ -205,6 +205,24 @@ export async function injectMemoryContext(
       // Knowledge sync not configured or failed — skip silently
     }
 
+    // 4. CSS reference injection (Jhey Tompkins / CodePen refs) — non-blocking
+    try {
+      const { getReferenceInjection } = await import("@/lib/reference-sync");
+      const refBlock = await getReferenceInjection(userMessage);
+      if (refBlock) enriched += refBlock;
+    } catch {
+      // Reference sync not configured — skip silently
+    }
+
+    // 5. CSS tools best practices — non-blocking
+    try {
+      const { getCssToolsInjection } = await import("@/lib/css-tools");
+      const cssBlock = await getCssToolsInjection();
+      if (cssBlock) enriched += cssBlock;
+    } catch {
+      // CSS tools not configured — skip silently
+    }
+
     return enriched;
   } catch {
     // If memory retrieval fails, return the original prompt without context.

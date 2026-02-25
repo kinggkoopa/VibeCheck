@@ -16,6 +16,7 @@ const NAV_ITEMS = [
   { href: "/dashboard/analytics", label: "Analytics" },
   { href: "/dashboard/remote", label: "Remote Control" },
   { href: "/dashboard/vision", label: "Vision Analysis" },
+  { href: "/dashboard/remix", label: "Creative Remix" },
   { href: "/dashboard/life", label: "Life Planner" },
   { href: "/dashboard/clone", label: "Clone Setup" },
 ] as const;

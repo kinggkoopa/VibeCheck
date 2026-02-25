@@ -2,6 +2,7 @@ import { listUserKeys } from "@/lib/crypto/keys";
 import { KeyManager } from "@/features/settings/key-manager";
 import { SkeletonSelector } from "@/components/SkeletonSelector";
 import { TasteEditor } from "@/components/TasteEditor";
+import { ReferenceSettings } from "@/components/ReferenceSettings";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +36,16 @@ export default async function SettingsPage() {
           Languages, frameworks, style, tone, and personal instructions.
         </p>
         <TasteEditor />
+      </section>
+
+      {/* ── CSS/HTML Reference Library ── */}
+      <section>
+        <h2 className="mb-1 text-lg font-semibold">CSS Reference Library</h2>
+        <p className="mb-4 text-sm text-muted">
+          Point to a local folder of Jhey Tompkins CodePen demos. Snippets get
+          indexed and injected as creative inspiration when generating UI code.
+        </p>
+        <ReferenceSettings />
       </section>
 
       {/* ── Project Skeleton / Bootstrap ── */}

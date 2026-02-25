@@ -8,6 +8,8 @@ import {
   type IterationPhase,
 } from "@/features/iterate/actions";
 import { ShipButton } from "@/components/ShipButton";
+import { FullShipButton } from "@/components/FullShipButton";
+import { VoiceResponse } from "@/components/VoiceResponse";
 
 // ── Phase display config ──
 
@@ -178,6 +180,11 @@ export function AutoIterate() {
                     code={result.finalCode}
                     title={`Auto-iterated code (vibe: ${result.finalVibeScore}/100)`}
                   />
+                  <FullShipButton
+                    code={result.finalCode}
+                    title={`Auto-iterated code (vibe: ${result.finalVibeScore}/100)`}
+                    description={`Auto-iterated ${result.totalIterations} times. Final vibe score: ${result.finalVibeScore}/100.`}
+                  />
                 </div>
               </div>
               <div className="max-h-96 overflow-y-auto rounded-lg border border-border bg-surface p-4">
@@ -187,6 +194,12 @@ export function AutoIterate() {
               </div>
             </div>
           )}
+
+          {/* Voice Response — Speak Summary */}
+          <VoiceResponse
+            text={`Auto-iteration complete. Final vibe score: ${result.finalVibeScore} out of 100 after ${result.totalIterations} iterations. ${result.steps.map((s) => s.phases.filter((p) => p.phase === "vibe-check").map((p) => p.output.slice(0, 200)).join(". ")).join(". ")}`}
+            compact
+          />
 
           {/* Iteration steps */}
           {result.steps.map((step) => (
