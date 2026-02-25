@@ -14,7 +14,7 @@ export function UserMenu() {
     supabase.auth.getUser().then(({ data: { user } }) => {
       setEmail(user?.email ?? null);
     });
-  }, []);
+  }, [supabase.auth]);
 
   async function handleSignOut() {
     await supabase.auth.signOut();
