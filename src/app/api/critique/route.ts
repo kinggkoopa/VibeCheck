@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { complete } from "@/core/llm/provider";
+import { injectMemoryContext } from "@/db/memory";
 
-const CRITIQUE_SYSTEM_PROMPT = `You are an expert code reviewer. Analyze the provided code and return a JSON object with this exact structure:
+const BASE_CRITIQUE_PROMPT = `You are an expert code reviewer. Analyze the provided code and return a JSON object with this exact structure:
 {
   "overall_score": <number 0-100>,
   "summary": "<brief 1-2 sentence summary>",
@@ -36,13 +37,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Auto-inject relevant memory context (e.g. project conventions, past reviews)
+    const systemPrompt = await injectMemoryContext(BASE_CRITIQUE_PROMPT, code);
+
     // Try providers in preference order
     const providers = ["anthropic", "openrouter", "openai", "groq"] as const;
     let rawResult: string | null = null;
 
     for (const provider of providers) {
       try {
-        rawResult = await complete(provider, CRITIQUE_SYSTEM_PROMPT, code, {
+        rawResult = await complete(provider, systemPrompt, code, {
           temperature: 0.2,
           maxTokens: 4096,
         });

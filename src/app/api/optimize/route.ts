@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { complete } from "@/core/llm/provider";
+import { injectMemoryContext } from "@/db/memory";
 import type { OptimizationStrategy } from "@/types";
 
 const VALID_STRATEGIES = new Set([
@@ -54,7 +55,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const systemPrompt = STRATEGY_PROMPTS[strategy as OptimizationStrategy];
+    const basePrompt = STRATEGY_PROMPTS[strategy as OptimizationStrategy];
+
+    // Auto-inject relevant memory context into the system prompt
+    const systemPrompt = await injectMemoryContext(basePrompt, prompt);
 
     // Try providers in order of preference until one works
     const providers = ["anthropic", "openrouter", "openai", "groq"] as const;
