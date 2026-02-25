@@ -1,12 +1,27 @@
-// ── Core domain types for MetaVibeCoder ──
+// ── MetaVibeCoder v1 — Domain Types ──
 
-export interface User {
+/** Supported BYOK LLM providers */
+export type LLMProvider = "anthropic" | "openrouter" | "groq" | "openai" | "ollama";
+
+/** A user's stored API key (metadata only — never includes the raw key) */
+export interface UserLLMKey {
   id: string;
-  email: string;
+  provider: LLMProvider;
+  display_label: string;
+  model_default: string | null;
+  is_active: boolean;
   created_at: string;
 }
 
-/** A single prompt optimization request/response */
+/** Prompt optimization strategies */
+export type OptimizationStrategy =
+  | "clarity"
+  | "specificity"
+  | "chain-of-thought"
+  | "few-shot"
+  | "role-based";
+
+/** A prompt optimization record */
 export interface PromptOptimization {
   id: string;
   user_id: string;
@@ -18,40 +33,18 @@ export interface PromptOptimization {
   created_at: string;
 }
 
-export type OptimizationStrategy =
-  | "clarity"
-  | "specificity"
-  | "chain-of-thought"
-  | "few-shot"
-  | "role-based";
+/** Agent roles in the swarm */
+export type AgentRole = "planner" | "coder" | "reviewer" | "tester";
 
-/** An agent in the multi-agent swarm */
-export interface Agent {
-  id: string;
-  name: string;
-  role: AgentRole;
-  system_prompt: string;
-  model: string;
-  enabled: boolean;
-}
-
-export type AgentRole =
-  | "planner"
-  | "coder"
-  | "reviewer"
-  | "tester"
-  | "documenter";
-
-/** A single turn in a swarm execution */
+/** A message from one agent in a swarm run */
 export interface SwarmMessage {
-  agent_id: string;
   agent_name: string;
   role: AgentRole;
   content: string;
   timestamp: string;
 }
 
-/** Result of a full swarm orchestration run */
+/** A complete swarm execution run */
 export interface SwarmRun {
   id: string;
   user_id: string;
@@ -59,10 +52,20 @@ export interface SwarmRun {
   messages: SwarmMessage[];
   final_output: string;
   status: "running" | "completed" | "failed";
+  iteration: number;
   created_at: string;
 }
 
-/** A critique from the review agent */
+/** An issue found during code critique */
+export interface CritiqueIssue {
+  severity: "info" | "warning" | "error";
+  category: string;
+  message: string;
+  line?: number;
+  suggestion?: string;
+}
+
+/** A code critique result */
 export interface Critique {
   id: string;
   user_id: string;
@@ -74,34 +77,76 @@ export interface Critique {
   created_at: string;
 }
 
-export interface CritiqueIssue {
-  severity: "info" | "warning" | "error";
-  category: string;
-  message: string;
-  line?: number;
-  suggestion?: string;
-}
-
-/** A memory entry stored in the vector DB */
+/** A vector memory entry */
 export interface MemoryEntry {
   id: string;
   user_id: string;
   content: string;
-  embedding?: number[];
+  metadata: Record<string, unknown>;
+  similarity?: number;
+  created_at: string;
+}
+
+/** A saved prompt in the library */
+export interface PromptLibraryEntry {
+  id: string;
+  user_id: string;
+  title: string;
+  content: string;
+  tags: string[];
+  usage_count: number;
+  created_at: string;
+}
+
+/** Analytics event types */
+export type AnalyticsEventType =
+  | "optimization"
+  | "swarm_run"
+  | "critique"
+  | "memory_store"
+  | "memory_search";
+
+/** An analytics event */
+export interface AnalyticsEvent {
+  id: string;
+  user_id: string;
+  event_type: AnalyticsEventType;
   metadata: Record<string, unknown>;
   created_at: string;
 }
 
-/** Provider configuration for LLM calls */
-export interface LLMProvider {
-  name: "openai" | "ollama";
-  model: string;
-  baseUrl?: string;
-  apiKey?: string;
-}
-
-/** Generic API response wrapper */
+/** Generic API response envelope */
 export interface ApiResponse<T> {
   data: T | null;
   error: string | null;
+}
+
+/** Provider config passed to the LLM factory */
+export interface ProviderConfig {
+  provider: LLMProvider;
+  apiKey: string;
+  model: string;
+  baseUrl?: string;
+}
+
+/** Supported model entry */
+export interface ModelInfo {
+  id: string;
+  name: string;
+  provider: LLMProvider;
+  contextWindow: number;
+  isDefault?: boolean;
+}
+
+/** LangGraph agent swarm state */
+export interface SwarmState {
+  task: string;
+  plan: string;
+  code: string;
+  review: string;
+  testResults: string;
+  messages: SwarmMessage[];
+  iteration: number;
+  maxIterations: number;
+  status: "planning" | "coding" | "reviewing" | "testing" | "complete" | "failed";
 }
