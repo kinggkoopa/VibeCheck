@@ -1,8 +1,11 @@
+"use client";
+
 import { createBrowserClient } from "@supabase/ssr";
 
 /**
  * Browser-side Supabase client.
- * Uses the anon key — RLS policies enforce access control.
+ * Uses cookie-based auth managed by @supabase/ssr.
+ * RLS policies enforce per-user access control.
  */
 export function createClient() {
   return createBrowserClient(

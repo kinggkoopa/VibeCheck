@@ -2,8 +2,11 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 /**
- * Middleware that refreshes the Supabase auth session on every request
- * and protects authenticated routes.
+ * Edge Middleware — Auth session refresh + route protection.
+ *
+ * Runs on every non-static request. Refreshes the Supabase session cookie,
+ * redirects unauthenticated users away from protected routes, and redirects
+ * authenticated users away from auth pages.
  */
 export async function middleware(request: NextRequest) {
   const supabaseResponse = NextResponse.next({ request });
@@ -16,7 +19,7 @@ export async function middleware(request: NextRequest) {
         getAll() {
           return request.cookies.getAll();
         },
-        setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
+        setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value, options }) => {
             request.cookies.set(name, value);
             supabaseResponse.cookies.set(name, value, options);
@@ -26,25 +29,31 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // Refresh session — must be called before checking user
+  // Refresh session — MUST be called before getUser()
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Protected routes: redirect unauthenticated users to login
-  const protectedPaths = ["/dashboard", "/optimizer", "/agents", "/critique", "/memory"];
-  const isProtected = protectedPaths.some((p) =>
-    request.nextUrl.pathname.startsWith(p)
-  );
+  const { pathname } = request.nextUrl;
+
+  // Protected routes: all (dashboard) group paths
+  const isProtected =
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/settings") ||
+    pathname.startsWith("/optimizer") ||
+    pathname.startsWith("/agents") ||
+    pathname.startsWith("/critique") ||
+    pathname.startsWith("/memory") ||
+    pathname.startsWith("/analytics");
 
   if (isProtected && !user) {
-    const loginUrl = new URL("/auth/login", request.url);
-    loginUrl.searchParams.set("next", request.nextUrl.pathname);
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  // Redirect authenticated users away from auth pages
-  if (user && request.nextUrl.pathname.startsWith("/auth")) {
+  // Redirect authed users away from auth pages
+  if (user && (pathname.startsWith("/login") || pathname.startsWith("/signup"))) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
@@ -53,7 +62,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Match all routes except static files and Next.js internals
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
