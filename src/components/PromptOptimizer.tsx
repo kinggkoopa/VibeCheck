@@ -9,6 +9,7 @@ import {
   deleteLibraryEntry,
 } from "@/features/optimizer/actions";
 import { useHotkeys } from "@/hooks/useHotkeys";
+import { VoiceInput } from "@/components/VoiceInput";
 import type { OptimizationStrategy, PromptLibraryEntry } from "@/types";
 
 // ── Strategy config ──
@@ -210,15 +211,24 @@ export function PromptOptimizer({ initialLibrary }: PromptOptimizerProps) {
       {/* ── Optimizer Form ── */}
       <form ref={formRef} onSubmit={handleOptimize} className="space-y-4">
         <div>
-          <label className="mb-1 block text-sm font-medium">
-            Your Raw Idea / Prompt
-          </label>
+          <div className="mb-1 flex items-center justify-between">
+            <label className="block text-sm font-medium">
+              Your Raw Idea / Prompt
+            </label>
+            <VoiceInput
+              onTranscript={(text) =>
+                setRawPrompt((prev) => (prev ? prev + " " + text : text))
+              }
+              onAutoRun={triggerOptimize}
+              disabled={pending}
+            />
+          </div>
           <textarea
             value={rawPrompt}
             onChange={(e) => setRawPrompt(e.target.value)}
             required
             rows={5}
-            placeholder="Describe what you want the AI to do. Can be rough, vague, or just a seed idea — the optimizer will refine it into a production-grade prompt..."
+            placeholder="Describe what you want the AI to do. Can be rough, vague, or just a seed idea — the optimizer will refine it into a production-grade prompt... (or tap the mic)"
             className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-primary"
           />
           {fastSuggestion && (

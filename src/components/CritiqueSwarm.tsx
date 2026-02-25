@@ -7,6 +7,7 @@ import {
   type AgentMessage,
 } from "@/features/critique/actions";
 import { useHotkeys } from "@/hooks/useHotkeys";
+import { VoiceInput } from "@/components/VoiceInput";
 
 // ── Agent display config ──
 
@@ -81,15 +82,24 @@ export function CritiqueSwarm() {
       {/* ── Code Input ── */}
       <form ref={formRef} onSubmit={handleRunSwarm} className="space-y-4">
         <div>
-          <label className="mb-1 block text-sm font-medium">
-            Code to Critique
-          </label>
+          <div className="mb-1 flex items-center justify-between">
+            <label className="block text-sm font-medium">
+              Code to Critique
+            </label>
+            <VoiceInput
+              onTranscript={(text) =>
+                setCode((prev) => (prev ? prev + "\n" + text : text))
+              }
+              onAutoRun={triggerSwarm}
+              disabled={pending}
+            />
+          </div>
           <textarea
             value={code}
             onChange={(e) => setCode(e.target.value)}
             required
             rows={12}
-            placeholder="Paste your code here. The swarm will analyze it from 4 angles: architecture, security, UX, and performance..."
+            placeholder="Paste your code here (or dictate with the mic). The swarm will analyze it from 4 angles: architecture, security, UX, and performance..."
             className="w-full rounded-lg border border-border bg-surface px-3 py-2 font-mono text-sm outline-none focus:border-primary"
           />
         </div>
