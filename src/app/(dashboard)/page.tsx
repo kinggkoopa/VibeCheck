@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
+import { OnboardingTour } from "@/components/OnboardingTour";
 
 export const dynamic = "force-dynamic";
 
@@ -40,6 +41,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8">
+      <OnboardingTour />
       <div>
         <h1 className="text-2xl font-bold">
           Welcome back{user?.email ? `, ${user.email.split("@")[0]}` : ""}

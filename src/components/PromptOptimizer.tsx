@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef, useCallback, useEffect } from "react";
 import {
   optimizePrompt,
   saveToLibrary,
@@ -8,6 +8,7 @@ import {
   bumpLibraryUsage,
   deleteLibraryEntry,
 } from "@/features/optimizer/actions";
+import { useHotkeys } from "@/hooks/useHotkeys";
 import type { OptimizationStrategy, PromptLibraryEntry } from "@/types";
 
 // ── Strategy config ──
@@ -63,17 +64,66 @@ export function PromptOptimizer({ initialLibrary }: PromptOptimizerProps) {
   const [success, setSuccess] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
+  // ── Fast suggest state ──
+  const [fastSuggestion, setFastSuggestion] = useState<string | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // ── Library state ──
   const [library, setLibrary] = useState<PromptLibraryEntry[]>(initialLibrary);
   const [showLibrary, setShowLibrary] = useState(initialLibrary.length > 0);
   const [saveTitle, setSaveTitle] = useState("");
   const [saveTags, setSaveTags] = useState("");
   const [showSaveForm, setShowSaveForm] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
 
   function clearFeedback() {
     setError(null);
     setSuccess(null);
   }
+
+  // ── Keyboard shortcuts ──
+  const triggerOptimize = useCallback(() => {
+    if (rawPrompt.trim() && !pending) {
+      formRef.current?.requestSubmit();
+    }
+  }, [rawPrompt, pending]);
+
+  useHotkeys([
+    { combo: { key: "Enter", meta: true }, handler: triggerOptimize },
+  ]);
+
+  // ── Fast suggest (debounced) ──
+  const fetchFastSuggestion = useCallback(async (input: string) => {
+    if (input.length < 20) {
+      setFastSuggestion(null);
+      return;
+    }
+    try {
+      const res = await fetch("/api/fast-suggest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ input, context: "optimize" }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.data?.suggestion) {
+          setFastSuggestion(data.data.suggestion);
+        }
+      }
+    } catch {
+      // Non-critical — silently ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      fetchFastSuggestion(rawPrompt);
+    }, 1500);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [rawPrompt, fetchFastSuggestion]);
 
   // ── Optimize ──
   function handleOptimize(e: React.FormEvent) {
@@ -82,6 +132,7 @@ export function PromptOptimizer({ initialLibrary }: PromptOptimizerProps) {
     clearFeedback();
     setResult(null);
     setShowSaveForm(false);
+    setFastSuggestion(null);
 
     startTransition(async () => {
       const res = await optimizePrompt(rawPrompt.trim(), strategy);
@@ -157,7 +208,7 @@ export function PromptOptimizer({ initialLibrary }: PromptOptimizerProps) {
   return (
     <div className="space-y-8">
       {/* ── Optimizer Form ── */}
-      <form onSubmit={handleOptimize} className="space-y-4">
+      <form ref={formRef} onSubmit={handleOptimize} className="space-y-4">
         <div>
           <label className="mb-1 block text-sm font-medium">
             Your Raw Idea / Prompt
@@ -170,6 +221,12 @@ export function PromptOptimizer({ initialLibrary }: PromptOptimizerProps) {
             placeholder="Describe what you want the AI to do. Can be rough, vague, or just a seed idea — the optimizer will refine it into a production-grade prompt..."
             className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-primary"
           />
+          {fastSuggestion && (
+            <div className="mt-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2">
+              <p className="text-xs font-medium text-primary-light">Quick tip</p>
+              <p className="mt-0.5 text-xs text-muted">{fastSuggestion}</p>
+            </div>
+          )}
         </div>
 
         <div>
@@ -201,6 +258,11 @@ export function PromptOptimizer({ initialLibrary }: PromptOptimizerProps) {
           className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-dark disabled:opacity-50"
         >
           {pending ? "Optimizing with your key..." : "Optimize Prompt"}
+          {!pending && (
+            <kbd className="ml-2 rounded bg-white/10 px-1.5 py-0.5 text-xs">
+              Cmd+Enter
+            </kbd>
+          )}
         </button>
       </form>
 

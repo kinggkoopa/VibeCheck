@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef, useCallback } from "react";
 import {
   executeCritiqueSwarm,
   type CritiqueReport,
   type AgentMessage,
 } from "@/features/critique/actions";
+import { useHotkeys } from "@/hooks/useHotkeys";
 
 // ── Agent display config ──
 
@@ -38,6 +39,18 @@ export function CritiqueSwarm() {
   const [provider, setProvider] = useState<string | null>(null);
   const [iterations, setIterations] = useState(0);
   const [pending, startTransition] = useTransition();
+  const formRef = useRef<HTMLFormElement>(null);
+
+  // ── Keyboard shortcut: Cmd+Enter to run swarm ──
+  const triggerSwarm = useCallback(() => {
+    if (code.trim() && !pending) {
+      formRef.current?.requestSubmit();
+    }
+  }, [code, pending]);
+
+  useHotkeys([
+    { combo: { key: "Enter", meta: true }, handler: triggerSwarm },
+  ]);
 
   function handleRunSwarm(e: React.FormEvent) {
     e.preventDefault();
@@ -66,7 +79,7 @@ export function CritiqueSwarm() {
   return (
     <div className="space-y-6">
       {/* ── Code Input ── */}
-      <form onSubmit={handleRunSwarm} className="space-y-4">
+      <form ref={formRef} onSubmit={handleRunSwarm} className="space-y-4">
         <div>
           <label className="mb-1 block text-sm font-medium">
             Code to Critique
@@ -94,6 +107,11 @@ export function CritiqueSwarm() {
             className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-dark disabled:opacity-50"
           >
             {pending ? "Running swarm..." : "Run Critique Swarm"}
+            {!pending && (
+              <kbd className="ml-2 rounded bg-white/10 px-1.5 py-0.5 text-xs">
+                Cmd+Enter
+              </kbd>
+            )}
           </button>
           {pending && (
             <p className="text-xs text-muted">

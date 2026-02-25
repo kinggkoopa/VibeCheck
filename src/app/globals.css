@@ -40,3 +40,47 @@ body {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
+
+/* ── Accessibility ── */
+
+/* Respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Skip-to-content link (hidden until focused) */
+.skip-to-content {
+  position: absolute;
+  left: -9999px;
+  z-index: 999;
+  padding: 0.5rem 1rem;
+  background: var(--color-primary);
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 0 0 0.5rem 0;
+  text-decoration: none;
+}
+.skip-to-content:focus {
+  left: 0;
+  top: 0;
+}
+
+/* High contrast selection */
+::selection {
+  background: var(--color-primary);
+  color: white;
+}
+
+/* Keyboard shortcut badge */
+kbd {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+}

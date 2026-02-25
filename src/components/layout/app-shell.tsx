@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { Sidebar } from "./sidebar";
 import { UserMenu } from "./user-menu";
 import { NoKeyBanner } from "@/components/no-key-banner";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
@@ -14,7 +15,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <Suspense fallback={null}>
           <NoKeyBanner />
         </Suspense>
-        <main className="flex-1 overflow-y-auto p-6">{children}</main>
+        <main id="main-content" className="flex-1 overflow-y-auto p-6">
+          <ErrorBoundary>{children}</ErrorBoundary>
+        </main>
       </div>
     </div>
   );

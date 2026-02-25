@@ -15,6 +15,9 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <body className="min-h-screen bg-background text-foreground antialiased">
+        <a href="#main-content" className="skip-to-content">
+          Skip to content
+        </a>
         {children}
       </body>
     </html>
