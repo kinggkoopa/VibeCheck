@@ -179,13 +179,22 @@ export async function injectMemoryContext(
   try {
     let enriched = systemPrompt;
 
-    // 1. Vector memory context
+    // 1. Taste/vibe profile injection — personalizes all LLM output
+    try {
+      const { getTasteInjection } = await import("@/lib/taste");
+      const tasteBlock = await getTasteInjection();
+      if (tasteBlock) enriched += tasteBlock;
+    } catch {
+      // Taste profile not configured — skip silently
+    }
+
+    // 2. Vector memory context
     const memories = await retrieveRelevantMemories(userMessage, maxMemories);
     if (memories.length > 0) {
       enriched += formatMemoryContext(memories);
     }
 
-    // 2. Knowledge sync (Obsidian/Notion) — non-blocking
+    // 3. Knowledge sync (Obsidian/Notion) — non-blocking
     try {
       const { searchKnowledge } = await import("@/lib/knowledge-sync");
       const knowledgeContext = await searchKnowledge(userMessage);

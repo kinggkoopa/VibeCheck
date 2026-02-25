@@ -1,6 +1,7 @@
 import { listUserKeys } from "@/lib/crypto/keys";
 import { KeyManager } from "@/features/settings/key-manager";
 import { SkeletonSelector } from "@/components/SkeletonSelector";
+import { TasteEditor } from "@/components/TasteEditor";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +25,16 @@ export default async function SettingsPage() {
           database unencrypted.
         </p>
         <KeyManager initialKeys={keys} />
+      </section>
+
+      {/* ── Taste / Vibe Profile ── */}
+      <section>
+        <h2 className="mb-1 text-lg font-semibold">Taste / Vibe Profile</h2>
+        <p className="mb-4 text-sm text-muted">
+          Your coding DNA — preferences injected into every AI interaction.
+          Languages, frameworks, style, tone, and personal instructions.
+        </p>
+        <TasteEditor />
       </section>
 
       {/* ── Project Skeleton / Bootstrap ── */}
