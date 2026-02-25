@@ -21,7 +21,8 @@ export async function storeUserKey(
   provider: LLMProvider,
   apiKey: string,
   displayLabel?: string,
-  modelDefault?: string
+  modelDefault?: string,
+  validated?: boolean
 ): Promise<string> {
   const supabase = await createClient();
 
@@ -30,6 +31,7 @@ export async function storeUserKey(
     p_api_key: apiKey,
     p_display_label: displayLabel ?? "",
     p_model_default: modelDefault ?? null,
+    p_validated: validated ?? false,
   });
 
   if (error) throw new Error(`Failed to store key: ${error.message}`);

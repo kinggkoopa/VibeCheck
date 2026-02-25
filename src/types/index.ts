@@ -10,6 +10,8 @@ export interface UserLLMKey {
   display_label: string;
   model_default: string | null;
   is_active: boolean;
+  key_hint: string;
+  validated_at: string | null;
   created_at: string;
 }
 

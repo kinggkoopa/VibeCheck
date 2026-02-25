@@ -5,9 +5,10 @@ import type { ModelInfo, LLMProvider } from "@/types";
  * Users select from these when configuring their keys.
  */
 export const MODEL_REGISTRY: ModelInfo[] = [
-  // ── Anthropic ──
-  { id: "claude-sonnet-4-20250514", name: "Claude Sonnet 4", provider: "anthropic", contextWindow: 200000, isDefault: true },
-  { id: "claude-haiku-4-20250414", name: "Claude Haiku 4", provider: "anthropic", contextWindow: 200000 },
+  // ── Anthropic (primary provider) ──
+  { id: "claude-opus-4-20250918", name: "Claude Opus 4.6", provider: "anthropic", contextWindow: 200000, isDefault: true },
+  { id: "claude-sonnet-4-20250514", name: "Claude Sonnet 4", provider: "anthropic", contextWindow: 200000 },
+  { id: "claude-haiku-4-5-20251001", name: "Claude Haiku 4.5", provider: "anthropic", contextWindow: 200000 },
 
   // ── OpenAI ──
   { id: "gpt-4o", name: "GPT-4o", provider: "openai", contextWindow: 128000, isDefault: true },
