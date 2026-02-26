@@ -51,7 +51,10 @@ export type AgentRole =
   | "kalshi-alpha"
   | "polymarket-max"
   | "results-booster"
-  | "opus-handoff";
+  | "opus-handoff"
+  | "godot-viber"
+  | "unreal-pro"
+  | "game-engine-master";
 
 /** A message from one agent in a swarm run */
 export interface SwarmMessage {
@@ -129,7 +132,10 @@ export type AnalyticsEventType =
   | "kalshi_alpha"
   | "polymarket_max"
   | "results_booster"
-  | "opus_handoff";
+  | "opus_handoff"
+  | "godot_vibe"
+  | "unreal_vibe"
+  | "game_engine_master";
 
 /** An analytics event */
 export interface AnalyticsEvent {
