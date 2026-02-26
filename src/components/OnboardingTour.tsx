@@ -1,3 +1,9 @@
+/**
+ * @deprecated Replaced by SetupWizard.tsx — a full-screen multi-step onboarding flow.
+ * Kept for backwards compatibility with users who already completed the old tour.
+ * The dashboard page no longer imports this component.
+ */
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
