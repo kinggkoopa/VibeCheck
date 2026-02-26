@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     const rateLimited = await checkLlmRateLimit(user.id);
     if (rateLimited) return rateLimited;
 
-    const { task, provider, max_iterations, enable_inspiration, enable_animation_critic } = await request.json();
+    const { task, provider, max_iterations, enable_inspiration, enable_animation_critic, enable_profit_mode, enable_math_preservation, existing_code } = await request.json();
 
     if (!task || typeof task !== "string" || task.trim().length < 10) {
       return NextResponse.json(
@@ -59,10 +59,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Execute the LangGraph swarm (with optional creative agents)
+    // Execute the LangGraph swarm (with optional creative agents, profit mode, and math preservation)
     const result = await runSwarm(provider as LLMProvider, task.trim(), iterations, {
       enableInspiration: enable_inspiration === true,
       enableAnimationCritic: enable_animation_critic === true,
+      enableProfitMode: enable_profit_mode === true,
+      enableMathPreservation: enable_math_preservation === true,
+      existingCode: typeof existing_code === "string" ? existing_code : undefined,
     });
 
     // Update the run record with results

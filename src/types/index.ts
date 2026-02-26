@@ -37,7 +37,21 @@ export interface PromptOptimization {
 }
 
 /** Agent roles in the swarm */
-export type AgentRole = "planner" | "coder" | "reviewer" | "tester" | "inspiration" | "animation-critic";
+export type AgentRole =
+  | "planner"
+  | "coder"
+  | "reviewer"
+  | "tester"
+  | "inspiration"
+  | "animation-critic"
+  | "profit-agent"
+  | "math-guardian"
+  | "alpha-simulator"
+  | "comprehension-gate"
+  | "kalshi-alpha"
+  | "polymarket-max"
+  | "results-booster"
+  | "opus-handoff";
 
 /** A message from one agent in a swarm run */
 export interface SwarmMessage {
@@ -107,7 +121,15 @@ export type AnalyticsEventType =
   | "swarm_run"
   | "critique"
   | "memory_store"
-  | "memory_search";
+  | "memory_search"
+  | "profit_analysis"
+  | "math_guardian"
+  | "alpha_sim"
+  | "comprehension_gate"
+  | "kalshi_alpha"
+  | "polymarket_max"
+  | "results_booster"
+  | "opus_handoff";
 
 /** An analytics event */
 export interface AnalyticsEvent {

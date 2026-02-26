@@ -4,11 +4,10 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import {
   isTTSAvailable,
   getEnglishVoices,
-  speak,
-  cleanTextForTTS,
   type TTSController,
   type TTSConfig,
 } from "@/lib/tts-utils";
+import { speakNatural, getAriaAttributes, getProgressPercent } from "@/lib/tts-engine";
 
 /**
  * VoiceResponse — Text-to-Speech output component.
@@ -81,10 +80,9 @@ export function VoiceResponse({ text, autoSpeak = false, compact = false }: Voic
   }, []);
 
   const handleSpeak = useCallback(() => {
-    const cleanText = cleanTextForTTS(text);
-    if (!cleanText) return;
+    if (!text) return;
 
-    controllerRef.current = speak(cleanText, config, {
+    controllerRef.current = speakNatural(text, config, {
       onStart: () => {
         setSpeaking(true);
         setPaused(false);
@@ -96,6 +94,7 @@ export function VoiceResponse({ text, autoSpeak = false, compact = false }: Voic
       },
       onPause: () => setPaused(true),
       onResume: () => setPaused(false),
+      onChunk: () => {},
       onWord: (charIndex) => setHighlightIndex(charIndex),
       onError: () => {
         setSpeaking(false);
@@ -195,21 +194,32 @@ export function VoiceResponse({ text, autoSpeak = false, compact = false }: Voic
         </label>
       </div>
 
-      {/* ── Speaking indicator ── */}
+      {/* ── Speaking indicator with ARIA ── */}
       {speaking && (
-        <div className="flex items-center gap-2">
-          <div className="flex gap-0.5">
-            <div className="h-3 w-1 animate-pulse rounded-full bg-primary" style={{ animationDelay: "0ms" }} />
-            <div className="h-3 w-1 animate-pulse rounded-full bg-primary" style={{ animationDelay: "150ms" }} />
-            <div className="h-3 w-1 animate-pulse rounded-full bg-primary" style={{ animationDelay: "300ms" }} />
-          </div>
-          <span className="text-xs text-primary-light">
-            {paused ? "Paused" : "Speaking..."}
-          </span>
-          {highlightIndex >= 0 && (
-            <span className="text-xs text-muted">
-              Position: {Math.round((highlightIndex / text.length) * 100)}%
+        <div className="space-y-2" {...getAriaAttributes(speaking, paused)}>
+          <div className="flex items-center gap-2">
+            <div className="flex gap-0.5">
+              <div className="h-3 w-1 animate-pulse rounded-full bg-primary" style={{ animationDelay: "0ms" }} />
+              <div className="h-3 w-1 animate-pulse rounded-full bg-primary" style={{ animationDelay: "150ms" }} />
+              <div className="h-3 w-1 animate-pulse rounded-full bg-primary" style={{ animationDelay: "300ms" }} />
+            </div>
+            <span className="text-xs text-primary-light">
+              {paused ? "Paused" : "Speaking..."}
             </span>
+            {highlightIndex >= 0 && (
+              <span className="text-xs text-muted">
+                {getProgressPercent(highlightIndex, text.length)}%
+              </span>
+            )}
+          </div>
+          {/* Progress bar */}
+          {highlightIndex >= 0 && (
+            <div className="h-1 w-full overflow-hidden rounded-full bg-surface-elevated">
+              <div
+                className="h-full rounded-full bg-primary transition-all duration-300"
+                style={{ width: `${getProgressPercent(highlightIndex, text.length)}%` }}
+              />
+            </div>
           )}
         </div>
       )}

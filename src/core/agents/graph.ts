@@ -31,6 +31,12 @@ export interface SwarmOptions {
   enableInspiration?: boolean;
   /** Enable Animation Critic (motion design review) */
   enableAnimationCritic?: boolean;
+  /** Enable Profit Mode — monetization analysis before coding */
+  enableProfitMode?: boolean;
+  /** Enable Math Preservation — analyze math before edits */
+  enableMathPreservation?: boolean;
+  /** Existing code to analyze for math preservation */
+  existingCode?: string;
 }
 
 /** Standard 4-agent swarm graph. */
@@ -90,6 +96,62 @@ export async function runSwarm(
   maxIterations: number = 3,
   options?: SwarmOptions
 ): Promise<SwarmState> {
+  // If profit mode is enabled, run the profit swarm first
+  if (options?.enableProfitMode) {
+    const { runProfitSwarm } = await import("./profit-graph");
+    const profitResult = await runProfitSwarm(task);
+
+    // Inject monetization strategy into the task
+    const enrichedTask = profitResult.report.monetization_strategy
+      ? `${task}\n\n[Profit Agent Analysis]\nMonetization: ${profitResult.report.monetization_strategy}\nProfit Score: ${profitResult.report.scores.overall}/10\nVerdict: ${profitResult.report.verdict}`
+      : task;
+
+    const app = buildSwarmGraph(provider, options);
+    const finalState = await app.invoke({
+      task: enrichedTask,
+      maxIterations,
+    });
+    return { ...finalState, status: "complete" } as SwarmState;
+  }
+
+  // If math preservation is enabled and existing code provided, run guardian first
+  if (options?.enableMathPreservation && options?.existingCode) {
+    const { runMathGuardianSwarm } = await import("./math-guardian-graph");
+    const guardianResult = await runMathGuardianSwarm(options.existingCode);
+
+    if (guardianResult.report.recommendation === "block") {
+      // Return a blocked state without running the main swarm
+      return {
+        task,
+        plan: "",
+        code: "",
+        review: `BLOCKED by Math Guardian (Respect Score: ${guardianResult.report.respectScore}/10): ${guardianResult.report.summary}`,
+        testResults: "",
+        inspiration: "",
+        animationReview: "",
+        messages: [{
+          agent_name: "Math Guardian",
+          role: "reviewer",
+          content: `Math Guardian blocked edits. Respect Score: ${guardianResult.report.respectScore}/10. ${guardianResult.report.riskAssessment}`,
+          timestamp: new Date().toISOString(),
+        }],
+        iteration: 0,
+        maxIterations,
+        status: "complete",
+      } as SwarmState;
+    }
+
+    // Inject preservation guidelines into the task
+    const preservedTask = `${task}\n\n[Math Guardian — Respect Score: ${guardianResult.report.respectScore}/10]\nProtected: ${guardianResult.report.protectedComponents.join(", ")}\nSafe to edit: ${guardianResult.report.safeEditScope.join(", ")}\nConditions: ${guardianResult.report.conditionsForEditing.join("; ")}`;
+
+    const app = buildSwarmGraph(provider, options);
+    const finalState = await app.invoke({
+      task: preservedTask,
+      maxIterations,
+    });
+    return { ...finalState, status: "complete" } as SwarmState;
+  }
+
   const app = buildSwarmGraph(provider, options);
 
   const finalState = await app.invoke({

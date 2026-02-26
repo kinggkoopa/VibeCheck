@@ -173,12 +173,126 @@ export function activate(context: vscode.ExtensionContext) {
     })
   );
 
+  // ── Multi-File Refactor ──
+  context.subscriptions.push(
+    vscode.commands.registerCommand("metaVibe.multiFileRefactor", async () => {
+      const task = await vscode.window.showInputBox({
+        prompt: "Describe the refactoring task",
+        placeHolder: "e.g., Refactor auth across these files, extract shared types...",
+      });
+
+      if (!task || task.trim().length < 5) return;
+
+      const mode = await vscode.window.showQuickPick(
+        ["analyze", "refactor", "review"],
+        { placeHolder: "Select analysis mode" }
+      );
+
+      if (!mode) return;
+
+      const files = await gatherMultiFileContext();
+
+      if (files.length === 0) {
+        vscode.window.showWarningMessage(
+          "No files to analyze. Open some files first."
+        );
+        return;
+      }
+
+      await runWithProgress(
+        `Analyzing ${files.length} files...`,
+        async () => {
+          const result = await callMetaVibe("/api/multi-file", {
+            files,
+            task,
+            mode,
+          });
+          showResultPanel(
+            outputChannel,
+            `Multi-File ${mode}: ${task}`,
+            result
+          );
+        }
+      );
+    })
+  );
+
+  // ── Critique All Open Files ──
+  context.subscriptions.push(
+    vscode.commands.registerCommand("metaVibe.critiqueAllOpen", async () => {
+      const files = await gatherMultiFileContext();
+
+      if (files.length === 0) {
+        vscode.window.showWarningMessage("No open files to critique.");
+        return;
+      }
+
+      await runWithProgress(
+        `Reviewing ${files.length} open files...`,
+        async () => {
+          const result = await callMetaVibe("/api/multi-file", {
+            files,
+            task: "Comprehensive code review. Focus on cross-file issues, type safety, architecture, and security.",
+            mode: "review",
+          });
+          showResultPanel(outputChannel, "Multi-File Review", result);
+
+          // Show score in notification
+          const data = result?.data as Record<string, unknown> | undefined;
+          if (data?.score) {
+            vscode.window.showInformationMessage(
+              `Multi-file review score: ${data.score}/100 across ${data.fileCount} files`
+            );
+          }
+        }
+      );
+    })
+  );
+
   outputChannel.appendLine("MetaVibeCoder extension activated.");
 }
 
 export function deactivate() {}
 
 // ── Helpers ──
+
+/** Gather content from all open text editors for multi-file analysis. */
+async function gatherMultiFileContext(): Promise<
+  Array<{ path: string; content: string }>
+> {
+  const files: Array<{ path: string; content: string }> = [];
+  const seen = new Set<string>();
+
+  for (const tabGroup of vscode.window.tabGroups.all) {
+    for (const tab of tabGroup.tabs) {
+      if (tab.input instanceof vscode.TabInputText) {
+        const uri = tab.input.uri;
+        const path = uri.fsPath;
+
+        // Skip duplicates and non-code files
+        if (seen.has(path)) continue;
+        if (path.includes("node_modules")) continue;
+        if (path.endsWith(".lock")) continue;
+        seen.add(path);
+
+        try {
+          const doc = await vscode.workspace.openTextDocument(uri);
+          // Skip very large files (>100KB)
+          if (doc.getText().length > 100_000) continue;
+
+          files.push({
+            path: vscode.workspace.asRelativePath(uri),
+            content: doc.getText(),
+          });
+        } catch {
+          // Skip unreadable files
+        }
+      }
+    }
+  }
+
+  return files;
+}
 
 function getConfig() {
   const config = vscode.workspace.getConfiguration("metaVibe");
