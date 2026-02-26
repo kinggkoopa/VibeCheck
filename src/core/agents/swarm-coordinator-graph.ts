@@ -680,13 +680,13 @@ function createSwarmExecutorNode(provider: LLMProvider) {
 
     const parsed = parseJSON<Record<string, unknown>>(result, {});
     const executionResults = ((parsed.execution_results ?? []) as ExecutionResult[]).map(
-      (r: Record<string, unknown>) => ({
+      (r) => ({
         swarm: String(r.swarm ?? "unknown"),
         phase: Number(r.phase ?? 1),
         status: (r.status ?? "completed") as "completed" | "partial" | "failed",
         output_summary: String(r.output_summary ?? ""),
         key_artifacts: ((r.key_artifacts ?? []) as KeyArtifact[]).map(
-          (a: Record<string, unknown>) => ({
+          (a) => ({
             type: (a.type ?? "analysis") as "code" | "design" | "analysis" | "report",
             name: String(a.name ?? "artifact"),
             content: String(a.content ?? ""),

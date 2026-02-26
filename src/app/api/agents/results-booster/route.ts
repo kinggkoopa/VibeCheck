@@ -41,8 +41,8 @@ export async function POST(request: NextRequest) {
         type: "results_booster",
         provider: result.provider,
         iterations: result.iterations,
-        score_before: result.report.scoreBefore,
-        score_after: result.report.scoreAfter,
+        score_before: result.report.beforeScores,
+        score_after: result.report.afterScores,
       },
     });
 

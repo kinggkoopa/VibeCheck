@@ -1216,6 +1216,11 @@ ${allOutputs}`;
               type: u.type ?? "button",
               style: u.style ?? "",
             })),
+            art_style: {
+              palette: ((rawAssets.art_style as Record<string, unknown>)?.palette as string[]) ?? [],
+              aesthetic: ((rawAssets.art_style as Record<string, unknown>)?.aesthetic as string) ?? "",
+              references: ((rawAssets.art_style as Record<string, unknown>)?.references as string[]) ?? [],
+            },
           };
         }
         const artStyle = assetData.art_style as AssetManifest["art_style"] | undefined;

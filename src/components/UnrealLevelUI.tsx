@@ -406,7 +406,7 @@ export function UnrealLevelUI() {
                         {report.assets.material_setup.map((mat, i) => (
                           <div key={i} className="flex items-center gap-2 text-xs">
                             <span className="text-primary-light">{(mat as Record<string, unknown>).name as string}</span>
-                            {(mat as Record<string, unknown>).nanite_compatible && (
+                            {Boolean((mat as Record<string, unknown>).nanite_compatible) && (
                               <span className="rounded bg-green-500/20 px-1 py-0.5 text-green-400">Nanite</span>
                             )}
                           </div>
@@ -423,19 +423,19 @@ export function UnrealLevelUI() {
               <div className="mt-4">
                 <h3 className="mb-2 font-semibold">Monetization Strategy</h3>
                 <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/5 p-3">
-                  {(report.monetization.monetization_model as Record<string, unknown>).type && (
+                  {Boolean((report.monetization.monetization_model as Record<string, unknown>).type) && (
                     <div className="flex items-center gap-2">
                       <span className="rounded bg-yellow-500/20 px-2 py-0.5 text-xs font-medium text-yellow-400">
                         {(report.monetization.monetization_model as Record<string, unknown>).type as string}
                       </span>
-                      {(report.monetization.monetization_model as Record<string, unknown>).base_price && (
+                      {Boolean((report.monetization.monetization_model as Record<string, unknown>).base_price) && (
                         <span className="text-xs text-muted">
                           Base: {(report.monetization.monetization_model as Record<string, unknown>).base_price as string}
                         </span>
                       )}
                     </div>
                   )}
-                  {(report.monetization.monetization_model as Record<string, unknown>).reasoning && (
+                  {Boolean((report.monetization.monetization_model as Record<string, unknown>).reasoning) && (
                     <p className="mt-1 text-xs text-muted">
                       {(report.monetization.monetization_model as Record<string, unknown>).reasoning as string}
                     </p>

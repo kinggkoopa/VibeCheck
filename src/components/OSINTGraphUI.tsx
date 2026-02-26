@@ -227,7 +227,7 @@ export function OSINTGraphUI() {
             onChange={(e) => setIdea(e.target.value)}
             required
             rows={4}
-            placeholder='e.g., "Build a domain intelligence tool that maps an organization\'s attack surface from public DNS records, certificate transparency logs, and WHOIS data" or "Create a social media monitoring dashboard for brand reputation analysis using public APIs"'
+            placeholder={'e.g., "Build a domain intelligence tool that maps an organization\'s attack surface from public DNS records, certificate transparency logs, and WHOIS data" or "Create a social media monitoring dashboard for brand reputation analysis using public APIs"'}
             className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-primary"
           />
         </div>

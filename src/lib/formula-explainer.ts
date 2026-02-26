@@ -29,7 +29,7 @@ export interface VariableExplanation {
 }
 
 export interface NumericalExample {
-  inputs: Record<string, number>;
+  inputs: Record<string, number | string>;
   output: number;
   explanation: string;
 }

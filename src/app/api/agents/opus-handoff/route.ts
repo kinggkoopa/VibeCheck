@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { buildHandoffContext, fuseResults, createHandoffMessage, estimateTokens } from "@/lib/opus-bridge";
 import { checkLlmRateLimit, validateInputSize, MAX_SIZES } from "@/lib/security";
-import { complete } from "@/core/llm/provider";
 import { createProviderFromStoredKey } from "@/core/llm/provider";
 
 /** POST /api/agents/opus-handoff — hand off swarm results to Opus for enhancement */
@@ -41,12 +40,12 @@ export async function POST(request: NextRequest) {
     const messages = createHandoffMessage(context);
 
     // Try to get provider — prefer Anthropic for Opus
-    let provider;
+    let providerResult;
     try {
-      provider = await createProviderFromStoredKey(user.id, "anthropic");
+      providerResult = await createProviderFromStoredKey("anthropic");
     } catch {
       try {
-        provider = await createProviderFromStoredKey(user.id, "openrouter");
+        providerResult = await createProviderFromStoredKey("openrouter");
       } catch {
         return NextResponse.json(
           { error: "No API key found. Add an Anthropic or OpenRouter key in Settings." },
@@ -59,11 +58,13 @@ export async function POST(request: NextRequest) {
       ? model
       : "claude-opus-4-20250514";
 
-    const opusResponse = await complete(provider, messages as Array<{ role: string; content: string }>, {
+    const completion = await providerResult.client.chat.completions.create({
       model: selectedModel,
       max_tokens: 4096,
       temperature: 0.3,
+      messages: messages as Array<{ role: "system" | "user" | "assistant"; content: string }>,
     });
+    const opusResponse = completion.choices[0]?.message?.content ?? "";
 
     const fused = fuseResults(swarm_output.trim(), opusResponse);
 
@@ -84,8 +85,8 @@ export async function POST(request: NextRequest) {
         fused,
         opusOutput: opusResponse,
         context: {
-          tokenEstimate: context.metadata.tokenEstimate,
-          complexity: context.metadata.complexity,
+          tokenEstimate: context.metadata.estimatedInputTokens + context.metadata.estimatedOutputTokens,
+          complexity: context.metadata.complexityScore,
         },
       },
       error: null,
