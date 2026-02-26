@@ -59,7 +59,8 @@ export type AgentRole =
   | "music-edu"
   | "cyber-shield"
   | "osint-hunter"
-  | "swarm-coordinator";
+  | "swarm-coordinator"
+  | "template-vibe";
 
 /** A message from one agent in a swarm run */
 export interface SwarmMessage {
