@@ -54,7 +54,12 @@ export type AgentRole =
   | "opus-handoff"
   | "godot-viber"
   | "unreal-pro"
-  | "game-engine-master";
+  | "game-engine-master"
+  | "gaming-master"
+  | "music-edu"
+  | "cyber-shield"
+  | "osint-hunter"
+  | "swarm-coordinator";
 
 /** A message from one agent in a swarm run */
 export interface SwarmMessage {
@@ -135,7 +140,12 @@ export type AnalyticsEventType =
   | "opus_handoff"
   | "godot_vibe"
   | "unreal_vibe"
-  | "game_engine_master";
+  | "game_engine_master"
+  | "gaming_master"
+  | "music_edu"
+  | "cyber_sec"
+  | "osint"
+  | "swarm_coordinator";
 
 /** An analytics event */
 export interface AnalyticsEvent {

@@ -53,6 +53,8 @@ end;
 $$;
 
 -- Update list_user_keys to include new columns
+-- Must drop first: return columns changed from prior migration
+drop function if exists list_user_keys();
 create or replace function list_user_keys()
 returns table (
   id            uuid,
