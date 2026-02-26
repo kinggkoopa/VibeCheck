@@ -94,6 +94,13 @@ export const AVAILABLE_SWARMS = [
     best_for: ["full game projects", "game design", "prototyping", "cross-platform games"],
     agent_count: 7,
   },
+  {
+    name: "template-vibe",
+    description: "Professional web template injection with taste-driven vibe synthesis and Jhey CSS inspiration",
+    capabilities: ["template-detection", "vibe-blending", "monetization-styling", "responsive-output", "vibe-scoring"],
+    best_for: ["web apps", "SaaS", "landing pages", "dashboards", "e-commerce", "portfolios"],
+    agent_count: 5,
+  },
 ] as const;
 
 // ── Coordinator sub-agent prompts ──

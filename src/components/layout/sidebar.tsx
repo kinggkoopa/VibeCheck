@@ -28,6 +28,7 @@ const NAV_ITEMS = [
   { href: "/dashboard/cyber-sec", label: "Cyber Shield" },
   { href: "/dashboard/osint", label: "OSINT Hunter" },
   { href: "/dashboard/swarm-coordinator", label: "Swarm Maestro" },
+  { href: "/dashboard/template-vibe", label: "Template Vibe" },
   { href: "/dashboard/tools", label: "Tool Belt" },
   { href: "/dashboard/memory", label: "Memory Vault" },
   { href: "/dashboard/analytics", label: "Analytics" },
