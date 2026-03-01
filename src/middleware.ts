@@ -54,17 +54,7 @@ function requiresCsrf(method: string, pathname: string): boolean {
 
 // ── Protected route patterns ──
 
-const PROTECTED_PREFIXES = [
-  "/dashboard",
-  "/settings",
-  "/optimizer",
-  "/agents",
-  "/critique",
-  "/memory",
-  "/analytics",
-  "/iterate",
-  "/tools",
-];
+const PROTECTED_PREFIXES = ["/dashboard"];
 
 export async function middleware(request: NextRequest) {
   const response = NextResponse.next({ request });
